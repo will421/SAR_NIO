@@ -1,0 +1,11 @@
+
+In this project, you will find a very basic GUI for a chat application.
+Please feel free to improve on it, and if you do, let me know.
+
+The chat GUI assumes the presence of a chat room, an object implementing
+the IChatRoom interface. You will wrap your implementation of your chat 
+room, based on your NIO implementation, with this interface.
+
+Please, have a look at the mock of a chat room with the class ChatRoomMock,
+showing a simple mock of a chat room, event-oriented style.
+
