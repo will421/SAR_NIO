@@ -20,7 +20,8 @@ can send and receive messages.
 
 Notice that you have the ability to have statistics
 on your messaging middleware, see NioEngine::startEcho() method,
-as long as you update the staticistic-related fields in the NioEngine class.
+as long as you update the staticistic-related fields in the NioEngine class.  
+ Test git
 
 
 
