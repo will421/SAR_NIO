@@ -1,17 +1,30 @@
 package nio.engine;
 
+import java.io.IOException;
+import java.nio.channels.ServerSocketChannel;
+
 public class CNioServer extends NioServer {
+
+	private ServerSocketChannel ssc;
+	
+	
+	public CNioServer(ServerSocketChannel ssc) {
+		this.ssc = ssc;
+	}
 
 	@Override
 	public int getPort() {
-		// TODO Auto-generated method stub
-		return 0;
+		return ssc.socket().getLocalPort();
 	}
 
 	@Override
 	public void close() {
-		// TODO Auto-generated method stub
-
+		try {
+			ssc.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 
 }

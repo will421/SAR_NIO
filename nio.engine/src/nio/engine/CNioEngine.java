@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -13,15 +14,26 @@ import java.util.Iterator;
 
 public class CNioEngine extends NioEngine {
 	
+	private class Paire<T,U> {
+		Paire(T premier,U second)
+		{
+			this.premier = premier;
+			this.second = second;
+		}
+		public T premier;
+		public U second;
+		}
+	
+	
 	
 	public Selector selector;
 	//Hashtable<Integer,ServerSocketChannel> listening;
-	Hashtable<Integer,ServerSocketChannel> listening;
+	Hashtable<Integer,Paire<NioServer,AcceptCallback>> listening;
 	
 	public CNioEngine() throws Exception {
 
 		selector = Selector.open();
-		listening = new Hashtable<Integer,ServerSocketChannel>();
+		listening = new Hashtable<Integer, CNioEngine.Paire<NioServer,AcceptCallback>>();
 		// TODO Auto-generated constructor stub 
 	}
 
@@ -66,11 +78,14 @@ public class CNioEngine extends NioEngine {
 	public NioServer listen(int port, AcceptCallback callback)
 			throws IOException {
 		// TODO Ajouter la gestion de NioServer et callback
-		listening.put(port,ServerSocketChannel.open());
+		ServerSocketChannel ssc = ServerSocketChannel.open();
 		InetSocketAddress isa = new InetSocketAddress("localhost", port);
-		listening.get(port).socket().bind(isa);
-		listening.get(port).register(selector, SelectionKey.OP_ACCEPT);
-		return null;
+		ssc.socket().bind(isa);
+		ssc.register(selector, SelectionKey.OP_ACCEPT);
+		NioServer nServer = new CNioServer(ssc);
+		Paire<NioServer,AcceptCallback> p = new Paire<NioServer,AcceptCallback>(nServer,callback);
+		listening.put(port, p);
+		return nServer;
 	}
 
 	@Override
@@ -86,7 +101,27 @@ public class CNioEngine extends NioEngine {
 	 * Accept a connection and make it non-blocking
 	 * @param the key of the channel on which a connection is requested
 	 */
-	private void handleAccept(SelectionKey key) {}
+	private void handleAccept(SelectionKey key) {
+		SocketChannel socketChannel = null;
+		ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
+		try {
+			socketChannel = serverSocketChannel.accept();
+			socketChannel.configureBlocking(false);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		try {
+			socketChannel.register(this.selector, SelectionKey.OP_READ);
+		} catch (ClosedChannelException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		Paire<NioServer,AcceptCallback> p = listening.get(serverSocketChannel.socket().getLocalPort());
+		NioChannel nChannel = new CNioChannel(socketChannel);
+		p.second.accepted(p.premier, nChannel);
+		
+	}
 	
 	/**
 	 * Finish to establish a connection

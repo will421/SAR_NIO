@@ -6,11 +6,16 @@ import java.nio.channels.SocketChannel;
 
 
 
-public class CNioChannel extends NioChannel implements AcceptCallback {
+public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 	
 	ByteBuffer buffer_channel;
-	
+	private DeliverCallback callback;
+
+	public CNioChannel(SocketChannel socketChannel) {
+		// TODO Auto-generated constructor stub
+	}
+
 	@Override
 	public SocketChannel getChannel() {
 
@@ -20,6 +25,7 @@ public class CNioChannel extends NioChannel implements AcceptCallback {
 	@Override
 	public void setDeliverCallback(DeliverCallback callback) {
 		// TODO Auto-generated method stub
+		this.callback = callback;
 
 	}
 
@@ -54,7 +60,7 @@ public class CNioChannel extends NioChannel implements AcceptCallback {
 		// TODO Auto-generated method stub
 
 	}
-
+/*
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {
 		String message;
@@ -70,5 +76,5 @@ public class CNioChannel extends NioChannel implements AcceptCallback {
 		message = "Channel Fermée";
 		System.out.println(message);
 	}
-
+*/
 }
