@@ -9,13 +9,14 @@ import java.nio.channels.SocketChannel;
 public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 	
-	ByteBuffer buffer_channel;
+	private ByteBuffer buffer_channel;
 	private DeliverCallback callback;
-	private CNioEngine nioEngine;
 	private SocketChannel socketChannel;
+	private CNioEngine nEngine;
 
-	public CNioChannel(SocketChannel socketChannel) {
+	public CNioChannel(SocketChannel socketChannel,CNioEngine nEngine) {
 		this.socketChannel = socketChannel;
+		this.nEngine = nEngine;
 	}
 
 	@Override
@@ -40,7 +41,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 	public void send(ByteBuffer buf) {
 
 		buffer_channel = buf.duplicate();
-
+		nEngine.wantToWrite(this, buffer_channel);
 	}
 
 	@Override
@@ -54,6 +55,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 			offset++;
 			length--;
 		}
+		nEngine.wantToWrite(this, buffer_channel);
 	}
 
 	@Override

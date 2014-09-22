@@ -12,6 +12,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 public class CNioEngine extends NioEngine {
 	
@@ -36,6 +37,7 @@ public class CNioEngine extends NioEngine {
 	Hashtable<SocketChannel,ConnectCallback> connecting;
 	Hashtable<ServerSocketChannel,CNioServer> nioServers;
 	Hashtable<SocketChannel,CNioChannel> nioChannels;
+	Hashtable<SocketChannel,LinkedList<ByteBuffer>> outBuffers;
 	
 	public CNioEngine() throws Exception {
 
@@ -126,7 +128,10 @@ public class CNioEngine extends NioEngine {
 			socketChannel.register(this.selector, SelectionKey.OP_READ);
 			
 			AcceptCallback callback = listening.get(serverSocketChannel);
-			NioChannel nChannel = new CNioChannel(socketChannel);
+			CNioChannel nChannel = new CNioChannel(socketChannel,this);
+			nioChannels.put(socketChannel, nChannel);
+			outBuffers.put(socketChannel, new LinkedList<ByteBuffer>());
+			
 			callback.accepted(nioServers.get(serverSocketChannel), nChannel);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -151,9 +156,10 @@ public class CNioEngine extends NioEngine {
 			return;
 		}
 		key.interestOps(key.interestOps() | SelectionKey.OP_READ);
-		CNioChannel nChannel = new CNioChannel(socketChannel);
+		CNioChannel nChannel = new CNioChannel(socketChannel,this);
 		nioChannels.put(socketChannel, nChannel);
 		connecting.get(socketChannel).connected(nChannel);
+		outBuffers.put(socketChannel, new LinkedList<ByteBuffer>());
 	}
 	
 	
@@ -235,6 +241,7 @@ public class CNioEngine extends NioEngine {
 	private void handleWrite(SelectionKey key) {
 		
 		
+		
 		/*System.out.println("handleWriteClient");
 		SocketChannel socketChannel = (SocketChannel) key.channel(); 
 		// outBuffer contains the data to write 
@@ -253,6 +260,20 @@ public class CNioEngine extends NioEngine {
 			return; 
 		}*/
 	}
+	
+	public void wantToWrite(CNioChannel nChannel,ByteBuffer buffer)
+	{
+		outBuffers.get(nChannel.getChannel()).add(buffer.duplicate());
+		
+		try {
+			nChannel.getChannel().register(selector, SelectionKey.OP_WRITE);
+		} catch (ClosedChannelException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		
+	}
+	
 	
 	
 }
