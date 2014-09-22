@@ -105,6 +105,7 @@ public class CNioEngine extends NioEngine {
 		sc.register(selector, SelectionKey.OP_CONNECT);
 		sc.connect(new InetSocketAddress(hostAddress, port));
 		connecting.put(sc, callback);
+		
 	}
 	
 	
@@ -147,6 +148,7 @@ public class CNioEngine extends NioEngine {
 		}
 		key.interestOps(key.interestOps() | SelectionKey.OP_READ);
 		NioChannel nChannel = new CNioChannel(socketChannel);
+		nioChannels.put(socketChannel, nChannel);
 		connecting.get(socketChannel).connected(nChannel);
 	}
 	
@@ -156,10 +158,31 @@ public class CNioEngine extends NioEngine {
 	 * @param the key of the channel on which the incoming data waits to be received 
 	 */
 	private void handleRead(SelectionKey key) throws IOException{
-		//Automate etc
-		SocketChannel socketChannel = (SocketChannel) key.channel();
-		
-		//deliveredcallback
+		/*SocketChannel socketChannel = (SocketChannel) key.channel(); 
+		int length = BUFFER_SIZE;
+		inBuffer = ByteBuffer.allocate(length); 
+
+		// Attempt to read off the channel 
+		int numRead; 
+		try { 
+			// Read up to length bytes 
+			numRead = socketChannel.read(inBuffer); 
+		} catch (IOException e) { 
+			// The remote forcibly closed the connection, cancel the selection key and close the channel. 
+			key.cancel(); 
+			socketChannel.close(); 
+			return; 
+		} 
+
+		if (numRead == -1) { 
+			// Remote entity shut the socket down cleanly. Do the same from our end and cancel the channel. 
+			key.channel().close(); 
+			key.cancel(); 
+			return; 
+		} 
+
+		// Process the received data, be aware that it may be incomplete 
+		this.processData(this, socketChannel, this.inBuffer.array(), numRead);*/
 		
 	}
 
@@ -168,7 +191,27 @@ public class CNioEngine extends NioEngine {
 	 * Handle outgoing data event
 	 * @param the key of the channel on which data can be sent 
 	 */
-	private void handleWrite(SelectionKey key) {}
+	private void handleWrite(SelectionKey key) {
+		
+		
+		/*System.out.println("handleWriteClient");
+		SocketChannel socketChannel = (SocketChannel) key.channel(); 
+		// outBuffer contains the data to write 
+		try { 
+			// Be aware thatthe write may be incomplete 
+			socketChannel.write(outBuffer); 
+			key.interestOps(SelectionKey.OP_READ);
+		} catch (IOException e) { 
+			// The channel has been closed 
+			try {
+				key.cancel(); 
+				socketChannel.close();
+			} catch (IOException e1) {
+				System.out.println("Erreur à la fermeture du socket");
+			} 
+			return; 
+		}*/
+	}
 	
 	
 }
