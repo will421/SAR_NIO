@@ -29,8 +29,7 @@ public class CNioEngine extends NioEngine {
 	}
 
 	public Selector selector;
-	// Hashtable<Integer,ServerSocketChannel> listening;
-	Hashtable<ServerSocketChannel, AcceptCallback> listening;
+	//Hashtable<ServerSocketChannel, AcceptCallback> listening;
 	Hashtable<SocketChannel, ConnectCallback> connecting;
 	Hashtable<ServerSocketChannel, CNioServer> nioServers;
 	Hashtable<SocketChannel, CNioChannel> nioChannels;
@@ -39,7 +38,7 @@ public class CNioEngine extends NioEngine {
 
 
 		selector = Selector.open();
-		listening = new Hashtable<ServerSocketChannel, AcceptCallback>();
+		//listening = new Hashtable<ServerSocketChannel, AcceptCallback>();
 		connecting = new Hashtable<SocketChannel, ConnectCallback>();
 		nioServers = new Hashtable<ServerSocketChannel, CNioServer>();
 		nioChannels = new Hashtable<SocketChannel, CNioChannel>();
@@ -95,8 +94,8 @@ public class CNioEngine extends NioEngine {
 			InetSocketAddress isa = new InetSocketAddress("localhost", port);
 			ssc.socket().bind(isa);
 			ssc.register(selector, SelectionKey.OP_ACCEPT);
-			nServer = new CNioServer(ssc);
-			listening.put(ssc, callback);
+			nServer = new CNioServer(ssc,callback);
+			//listening.put(ssc, callback);
 			nioServers.put(ssc, nServer);
 			
 		} catch (IOException e) {
@@ -141,7 +140,7 @@ public class CNioEngine extends NioEngine {
 			socketChannel.configureBlocking(false);
 			socketChannel.register(this.selector, SelectionKey.OP_READ);
 
-			AcceptCallback callback = listening.get(serverSocketChannel);
+			AcceptCallback callback = nioServers.get(serverSocketChannel).getCallback();
 			CNioChannel nChannel = new CNioChannel(socketChannel, this);
 			nioChannels.put(socketChannel, nChannel);
 			

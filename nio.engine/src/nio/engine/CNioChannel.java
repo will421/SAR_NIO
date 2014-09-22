@@ -45,7 +45,6 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 	@Override
 	public void setDeliverCallback(DeliverCallback callback) {
-		// TODO Auto-generated method stub
 		this.callback = callback;
 
 	}
@@ -87,27 +86,25 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 	public void readAutomaton() throws IOException 
 	{
+		//Penser à peut etre boucler un peu au cas où le buffer NIO contienne plusieurs messages
 		
-	
-
+		
+		
 		if (currentState == READING_LENGTH) { // Lecture de la taille totale du message 
-
-			int length_msg = socketChannel.read(buffer_length);
-
-			buffer_read = ByteBuffer.allocate(length_msg);
+			socketChannel.read(buffer_length);
 			
-			if(buffer_read.position()==3){
-				buffer_read.position(0); // on se reposition au début pour ecraser et réécrer dessus
+			if(buffer_length.remaining()==0){
+				buffer_length.position(0);
+				int length_msg = buffer_length.getInt();
+				buffer_read = ByteBuffer.allocate(length_msg);
 				currentState = READING_MSG;
 			}
 		}
 
-		else if ( currentState == READING_MSG ){
+		if ( currentState == READING_MSG ){
 			
 			// routine lecture message
-			//....			
-		    //....		
-			
+			socketChannel.read(buffer_read);
 			
 			
 			if( buffer_read.remaining() == 0 ) {
@@ -118,16 +115,18 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 				// On vide le buffer après envoi 
 				buffer_read = null;	
+				buffer_length.position(0); // on se reposition au début pour ecraser et réécrer dessus
 				currentState = READING_LENGTH;
 				
 			}
 
-			else { // Message non recu correctement
-
-				System.err.println("Message non recu correctement");
-				currentState = READING_LENGTH;
-			}
-
+		}
+		if (currentState != READING_MSG || currentState != READING_LENGTH )
+		{
+			System.err.println("Message non recu correctement");
+			buffer_read = null;	
+			buffer_length.position(0); // on se reposition au début pour ecraser et réécrer dessus
+			currentState = READING_LENGTH;
 		}
 
 	}
