@@ -189,60 +189,8 @@ public class CNioEngine extends NioEngine {
 	private void handleRead(SelectionKey key) throws IOException {
 
 		SocketChannel socketChannel = (SocketChannel) key.channel();
-		// int length = BUFFER_SIZE;
-		// ByteBuffer inBuffer = ByteBuffer.allocate(length);
-		// int numRead;
-		// try {
-		// numRead = socketChannel.read(inBuffer);
-		// } catch (IOException e) {
-		// // The remote forcibly closed the connection, cancel the selection
-		// key and close the channel.
-		// e.printStackTrace();
-		// key.cancel();
-		// try {
-		// socketChannel.close();
-		// } catch (IOException e1) {
-		// e1.printStackTrace();
-		// System.exit(1);
-		// }
-		// return;
-		// }
-		//
-		// if (numRead == -1) {
-		// // Remote entity shut the socket down cleanly. Do the same from our
-		// end and cancel the channel.
-		// try {
-		// key.channel().close();
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// System.exit(1);
-		// }
-		// key.cancel();
-		// //Callback close
-		// return;
-		// }
-		//
-		// Process data
-		nioChannels.get(socketChannel).received();
 
-		/*
-		 * SocketChannel socketChannel = (SocketChannel) key.channel(); int
-		 * length = BUFFER_SIZE; inBuffer = ByteBuffer.allocate(length);
-		 * 
-		 * // Attempt to read off the channel int numRead; try { // Read up to
-		 * length bytes numRead = socketChannel.read(inBuffer); } catch
-		 * (IOException e) { // The remote forcibly closed the connection,
-		 * cancel the selection key and close the channel. key.cancel();
-		 * socketChannel.close(); return; }
-		 * 
-		 * if (numRead == -1) { // Remote entity shut the socket down cleanly.
-		 * Do the same from our end and cancel the channel.
-		 * key.channel().close(); key.cancel(); return; }
-		 * 
-		 * // Process the received data, be aware that it may be incomplete
-		 * this.processData(this, socketChannel, this.inBuffer.array(),
-		 * numRead);
-		 */
+		nioChannels.get(socketChannel).readAutomaton();
 
 	}
 
@@ -265,14 +213,15 @@ public class CNioEngine extends NioEngine {
 		 * System.out.println("Erreur à la fermeture du socket"); } return; }
 		 */
 
-
+		if(true)
+			key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
 	}
 
 	
 	public void wantToWrite(CNioChannel nChannel)
 	{
 		try {
-			nChannel.getChannel().register(selector, SelectionKey.OP_WRITE);
+				nChannel.getChannel().register(selector, SelectionKey.OP_WRITE);
 		} catch (ClosedChannelException e) {
 			e.printStackTrace();
 			System.exit(1);

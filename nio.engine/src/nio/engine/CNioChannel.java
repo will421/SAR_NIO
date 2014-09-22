@@ -85,42 +85,47 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 	}
 
-	public void received() throws IOException 
+	public void readAutomaton() throws IOException 
 	{
-		int state = this.currentState;
+		
 	
 
-		if (state == READING_LENGTH) { // Lecture de la taille totale du message 
+		if (currentState == READING_LENGTH) { // Lecture de la taille totale du message 
 
 			int length_msg = socketChannel.read(buffer_length);
 
 			buffer_read = ByteBuffer.allocate(length_msg);
 			
-			
-			buffer_read.position(0); // on se reposition au début pour ecraser et réécrer dessus
-			state = READING_MSG;
+			if(buffer_read.position()==3){
+				buffer_read.position(0); // on se reposition au début pour ecraser et réécrer dessus
+				currentState = READING_MSG;
+			}
 		}
 
-		else if ( state == READING_MSG ){
+		else if ( currentState == READING_MSG ){
 			
 			// routine lecture message
 			//....			
-		    //....			
+		    //....		
+			
+			
 			
 			if( buffer_read.remaining() == 0 ) {
 				//lecture complète on envoie
 
 				//callback
-				send(buffer_read);
+				callback.deliver(this, buffer_read.duplicate()); //duplicate car le buffer est ecrasé pour la prochaine reception, l'utilisateur peut perdre son message
 
 				// On vide le buffer après envoi 
 				buffer_read = null;	
+				currentState = READING_LENGTH;
 				
 			}
 
 			else { // Message non recu correctement
 
 				System.err.println("Message non recu correctement");
+				currentState = READING_LENGTH;
 			}
 
 		}
