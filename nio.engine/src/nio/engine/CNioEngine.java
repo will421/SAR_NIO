@@ -46,6 +46,7 @@ public class CNioEngine extends NioEngine {
 		connecting = new Hashtable<SocketChannel, ConnectCallback>();
 		nioServers = new Hashtable<ServerSocketChannel, CNioServer>();
 		nioChannels = new Hashtable<SocketChannel, CNioChannel>();
+		outBuffers = new Hashtable<SocketChannel, LinkedList<ByteBuffer>>();
 		// TODO Auto-generated constructor stub 
 	}
 
