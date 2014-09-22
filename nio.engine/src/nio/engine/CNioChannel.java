@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.Hashtable;
+import java.util.LinkedList;
 
 
 
@@ -26,6 +28,8 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 	static final int READING_MSG = 2;
 
 	int currentState = READING_LENGTH; // initial state 
+
+	
 
 
 
@@ -108,6 +112,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 				// On vide le buffer après envoi 
 				buffer_read = null;	
+				
 			}
 
 			else { // Message non recu correctement
@@ -119,6 +124,9 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 	}
 
+	
+	
+	
 	/*
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {

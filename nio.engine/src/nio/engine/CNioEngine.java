@@ -15,30 +15,26 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 public class CNioEngine extends NioEngine {
-	
-	
-	static int BUFFER_SIZE=10000;
-	
-	private class Paire<T,U> {
-		Paire(T premier,U second)
-		{
+
+	static int BUFFER_SIZE = 10000;
+
+	private class Paire<T, U> {
+		Paire(T premier, U second) {
 			this.premier = premier;
 			this.second = second;
 		}
+
 		public T premier;
 		public U second;
-		}
-	
-	
-	
+	}
+
 	public Selector selector;
-	//Hashtable<Integer,ServerSocketChannel> listening;
-	Hashtable<ServerSocketChannel,AcceptCallback> listening;
-	Hashtable<SocketChannel,ConnectCallback> connecting;
-	Hashtable<ServerSocketChannel,CNioServer> nioServers;
-	Hashtable<SocketChannel,CNioChannel> nioChannels;
-	Hashtable<SocketChannel,LinkedList<ByteBuffer>> outBuffers;
-	
+	// Hashtable<Integer,ServerSocketChannel> listening;
+	Hashtable<ServerSocketChannel, AcceptCallback> listening;
+	Hashtable<SocketChannel, ConnectCallback> connecting;
+	Hashtable<ServerSocketChannel, CNioServer> nioServers;
+	Hashtable<SocketChannel, CNioChannel> nioChannels;
+
 	public CNioEngine() throws Exception {
 
 		selector = Selector.open();
@@ -46,16 +42,17 @@ public class CNioEngine extends NioEngine {
 		connecting = new Hashtable<SocketChannel, ConnectCallback>();
 		nioServers = new Hashtable<ServerSocketChannel, CNioServer>();
 		nioChannels = new Hashtable<SocketChannel, CNioChannel>();
-		// TODO Auto-generated constructor stub 
+		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	public void mainloop() {
 		while (true) {
 			try {
-				
+
 				selector.select();
-				Iterator<?> selectedKeys = this.selector.selectedKeys().iterator();
+				Iterator<?> selectedKeys = this.selector.selectedKeys()
+						.iterator();
 
 				while (selectedKeys.hasNext()) {
 
@@ -76,8 +73,8 @@ public class CNioEngine extends NioEngine {
 
 					} else if (key.isConnectable()) {
 						handleConnection(key);
-					} else 
-						System.out.println("  ---> unknow key="+key);
+					} else
+						System.out.println("  ---> unknow key=" + key);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -111,40 +108,44 @@ public class CNioEngine extends NioEngine {
 		sc.register(selector, SelectionKey.OP_CONNECT);
 		sc.connect(new InetSocketAddress(hostAddress, port));
 		connecting.put(sc, callback);
-		
+
 	}
-	
-	
+
 	/**
 	 * Accept a connection and make it non-blocking
-	 * @param the key of the channel on which a connection is requested
+	 * 
+	 * @param the
+	 *            key of the channel on which a connection is requested
 	 */
 	private void handleAccept(SelectionKey key) {
 		SocketChannel socketChannel = null;
-		ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
+		ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key
+				.channel();
 		try {
 			socketChannel = serverSocketChannel.accept();
 			socketChannel.configureBlocking(false);
 			socketChannel.register(this.selector, SelectionKey.OP_READ);
-			
+
 			AcceptCallback callback = listening.get(serverSocketChannel);
-			CNioChannel nChannel = new CNioChannel(socketChannel,this);
+			CNioChannel nChannel = new CNioChannel(socketChannel, this);
 			nioChannels.put(socketChannel, nChannel);
-			outBuffers.put(socketChannel, new LinkedList<ByteBuffer>());
 			
+
 			callback.accepted(nioServers.get(serverSocketChannel), nChannel);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
-		} 
+		}
 	}
-	
+
 	/**
 	 * Finish to establish a connection
-	 * @param the key of the channel on which a connection is requested
+	 * 
+	 * @param the
+	 *            key of the channel on which a connection is requested
 	 */
 	private void handleConnection(SelectionKey key) {
-		
+
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 
 		try {
@@ -156,114 +157,103 @@ public class CNioEngine extends NioEngine {
 			return;
 		}
 		key.interestOps(key.interestOps() | SelectionKey.OP_READ);
-		CNioChannel nChannel = new CNioChannel(socketChannel,this);
+		CNioChannel nChannel = new CNioChannel(socketChannel, this);
 		nioChannels.put(socketChannel, nChannel);
 		connecting.get(socketChannel).connected(nChannel);
-		outBuffers.put(socketChannel, new LinkedList<ByteBuffer>());
+		
 	}
-	
-	
+
 	/**
 	 * Handle incoming data event
-	 * @param the key of the channel on which the incoming data waits to be received 
+	 * 
+	 * @param the
+	 *            key of the channel on which the incoming data waits to be
+	 *            received
+	 * @throws IOException
 	 */
-	private void handleRead(SelectionKey key){
-		
-		SocketChannel socketChannel = (SocketChannel) key.channel(); 
-//		int length = BUFFER_SIZE;
-//		ByteBuffer inBuffer = ByteBuffer.allocate(length);
-//		int numRead;
-//		try {
-//			numRead = socketChannel.read(inBuffer);
-//		} catch (IOException e) { 
-//			// The remote forcibly closed the connection, cancel the selection key and close the channel. 
-//			e.printStackTrace();
-//			key.cancel(); 
-//			try {
-//				socketChannel.close();
-//			} catch (IOException e1) {
-//				e1.printStackTrace();
-//				System.exit(1);
-//			} 
-//			return; 
-//		} 
-//		
-//		if (numRead == -1) { 
-//			// Remote entity shut the socket down cleanly. Do the same from our end and cancel the channel. 
-//			try {
-//				key.channel().close();
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//				System.exit(1);
-//			}
-//			key.cancel(); 
-//			//Callback close
-//			return; 
-//		} 
-//		
-		//Process data
+	private void handleRead(SelectionKey key) throws IOException {
+
+		SocketChannel socketChannel = (SocketChannel) key.channel();
+		// int length = BUFFER_SIZE;
+		// ByteBuffer inBuffer = ByteBuffer.allocate(length);
+		// int numRead;
+		// try {
+		// numRead = socketChannel.read(inBuffer);
+		// } catch (IOException e) {
+		// // The remote forcibly closed the connection, cancel the selection
+		// key and close the channel.
+		// e.printStackTrace();
+		// key.cancel();
+		// try {
+		// socketChannel.close();
+		// } catch (IOException e1) {
+		// e1.printStackTrace();
+		// System.exit(1);
+		// }
+		// return;
+		// }
+		//
+		// if (numRead == -1) {
+		// // Remote entity shut the socket down cleanly. Do the same from our
+		// end and cancel the channel.
+		// try {
+		// key.channel().close();
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// System.exit(1);
+		// }
+		// key.cancel();
+		// //Callback close
+		// return;
+		// }
+		//
+		// Process data
 		nioChannels.get(socketChannel).received();
-		
-		
-		/*SocketChannel socketChannel = (SocketChannel) key.channel(); 
-		int length = BUFFER_SIZE;
-		inBuffer = ByteBuffer.allocate(length); 
 
-		// Attempt to read off the channel 
-		int numRead; 
-		try { 
-			// Read up to length bytes 
-			numRead = socketChannel.read(inBuffer); 
-		} catch (IOException e) { 
-			// The remote forcibly closed the connection, cancel the selection key and close the channel. 
-			key.cancel(); 
-			socketChannel.close(); 
-			return; 
-		} 
+		/*
+		 * SocketChannel socketChannel = (SocketChannel) key.channel(); int
+		 * length = BUFFER_SIZE; inBuffer = ByteBuffer.allocate(length);
+		 * 
+		 * // Attempt to read off the channel int numRead; try { // Read up to
+		 * length bytes numRead = socketChannel.read(inBuffer); } catch
+		 * (IOException e) { // The remote forcibly closed the connection,
+		 * cancel the selection key and close the channel. key.cancel();
+		 * socketChannel.close(); return; }
+		 * 
+		 * if (numRead == -1) { // Remote entity shut the socket down cleanly.
+		 * Do the same from our end and cancel the channel.
+		 * key.channel().close(); key.cancel(); return; }
+		 * 
+		 * // Process the received data, be aware that it may be incomplete
+		 * this.processData(this, socketChannel, this.inBuffer.array(),
+		 * numRead);
+		 */
 
-		if (numRead == -1) { 
-			// Remote entity shut the socket down cleanly. Do the same from our end and cancel the channel. 
-			key.channel().close(); 
-			key.cancel(); 
-			return; 
-		} 
-
-		// Process the received data, be aware that it may be incomplete 
-		this.processData(this, socketChannel, this.inBuffer.array(), numRead);*/
-		
 	}
 
-	
 	/**
 	 * Handle outgoing data event
-	 * @param the key of the channel on which data can be sent 
+	 * 
+	 * @param the
+	 *            key of the channel on which data can be sent
 	 */
-	private void handleWrite(SelectionKey key) {
-		
-		
-		
-		/*System.out.println("handleWriteClient");
-		SocketChannel socketChannel = (SocketChannel) key.channel(); 
-		// outBuffer contains the data to write 
-		try { 
-			// Be aware thatthe write may be incomplete 
-			socketChannel.write(outBuffer); 
-			key.interestOps(SelectionKey.OP_READ);
-		} catch (IOException e) { 
-			// The channel has been closed 
-			try {
-				key.cancel(); 
-				socketChannel.close();
-			} catch (IOException e1) {
-				System.out.println("Erreur à la fermeture du socket");
-			} 
-			return; 
-		}*/
+	private void handleWrite(SelectionKey key) throws IOException {
+
+		/*
+		 * System.out.println("handleWriteClient"); SocketChannel socketChannel
+		 * = (SocketChannel) key.channel(); // outBuffer contains the data to
+		 * write try { // Be aware thatthe write may be incomplete
+		 * socketChannel.write(outBuffer);
+		 * key.interestOps(SelectionKey.OP_READ); } catch (IOException e) { //
+		 * The channel has been closed try { key.cancel();
+		 * socketChannel.close(); } catch (IOException e1) {
+		 * System.out.println("Erreur à la fermeture du socket"); } return; }
+		 */
+
+
 	}
-	
-	public void wantToWrite(CNioChannel nChannel,ByteBuffer buffer)
-	{
-		outBuffers.get(nChannel.getChannel()).add(buffer.duplicate());
+
+	public void wantToWrite(CNioChannel nChannel, ByteBuffer buffer) {
 		
 		try {
 			nChannel.getChannel().register(selector, SelectionKey.OP_WRITE);
@@ -271,10 +261,7 @@ public class CNioEngine extends NioEngine {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
+
 	}
-	
-	
-	
+
 }
-0
