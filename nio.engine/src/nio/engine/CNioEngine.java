@@ -37,12 +37,24 @@ public class CNioEngine extends NioEngine {
 
 	public CNioEngine() throws Exception {
 
+<<<<<<< HEAD
 		selector = Selector.open();
 		listening = new Hashtable<ServerSocketChannel, AcceptCallback>();
 		connecting = new Hashtable<SocketChannel, ConnectCallback>();
 		nioServers = new Hashtable<ServerSocketChannel, CNioServer>();
 		nioChannels = new Hashtable<SocketChannel, CNioChannel>();
 		// TODO Auto-generated constructor stub
+=======
+
+			selector = Selector.open();
+			listening = new Hashtable<ServerSocketChannel, AcceptCallback>();
+			connecting = new Hashtable<SocketChannel, ConnectCallback>();
+			nioServers = new Hashtable<ServerSocketChannel, CNioServer>();
+			nioChannels = new Hashtable<SocketChannel, CNioChannel>();
+			outBuffers = new Hashtable<SocketChannel, LinkedList<ByteBuffer>>();
+
+		// TODO Auto-generated constructor stub 
+>>>>>>> origin/master
 	}
 
 	@Override
@@ -78,6 +90,7 @@ public class CNioEngine extends NioEngine {
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
+				System.exit(1);
 			}
 		}
 
@@ -85,29 +98,49 @@ public class CNioEngine extends NioEngine {
 
 	@Override
 	public NioServer listen(int port, AcceptCallback callback)
-			throws IOException {
-		// TODO Ajouter la gestion de NioServer et callback
-		ServerSocketChannel ssc = ServerSocketChannel.open();
-		ssc.configureBlocking(false);
-		InetSocketAddress isa = new InetSocketAddress("localhost", port);
-		ssc.socket().bind(isa);
-		ssc.register(selector, SelectionKey.OP_ACCEPT);
-		CNioServer nServer = new CNioServer(ssc);
-		listening.put(ssc, callback);
-		nioServers.put(ssc, nServer);
+			/*throws IOException*/ {
+		CNioServer nServer = null;
+		try {
+			ServerSocketChannel ssc = ServerSocketChannel.open();
+			ssc.configureBlocking(false);
+			InetSocketAddress isa = new InetSocketAddress("localhost", port);
+			ssc.socket().bind(isa);
+			ssc.register(selector, SelectionKey.OP_ACCEPT);
+			nServer = new CNioServer(ssc);
+			listening.put(ssc, callback);
+			nioServers.put(ssc, nServer);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 		return nServer;
 	}
 
 	@Override
 	public void connect(InetAddress hostAddress, int port,
-			ConnectCallback callback) throws UnknownHostException,
-			SecurityException, IOException {
+			ConnectCallback callback)/* throws UnknownHostException,
+			SecurityException, IOException*/ {
 		// TODO Auto-generated method stub
+<<<<<<< HEAD
 		SocketChannel sc = SocketChannel.open();
 		sc.configureBlocking(false);
 		sc.register(selector, SelectionKey.OP_CONNECT);
 		sc.connect(new InetSocketAddress(hostAddress, port));
 		connecting.put(sc, callback);
+=======
+		SocketChannel sc;
+		try {
+			sc = SocketChannel.open();
+			sc.configureBlocking(false);
+			sc.register(selector, SelectionKey.OP_CONNECT);
+			sc.connect(new InetSocketAddress(hostAddress, port));
+			connecting.put(sc, callback);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+>>>>>>> origin/master
 
 	}
 
@@ -252,8 +285,15 @@ public class CNioEngine extends NioEngine {
 
 
 	}
+<<<<<<< HEAD
 
 	public void wantToWrite(CNioChannel nChannel, ByteBuffer buffer) {
+=======
+	
+	/*public void wantToWrite(CNioChannel nChannel,ByteBuffer buffer)
+	{
+		outBuffers.get(nChannel.getChannel()).add(buffer.duplicate());
+>>>>>>> origin/master
 		
 		try {
 			nChannel.getChannel().register(selector, SelectionKey.OP_WRITE);
@@ -261,7 +301,15 @@ public class CNioEngine extends NioEngine {
 			e.printStackTrace();
 			System.exit(1);
 		}
+<<<<<<< HEAD
 
 	}
 
+=======
+		
+	}*/
+	
+	
+	
+>>>>>>> origin/master
 }

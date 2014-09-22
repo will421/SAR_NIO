@@ -74,7 +74,11 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 			offset++;
 			length--;
 		}
+<<<<<<< HEAD
 		nEngine.wantToWrite(this, buffer_out);
+=======
+		//nEngine.wantToWrite(this, buffer_channel);
+>>>>>>> origin/master
 	}
 
 	@Override
