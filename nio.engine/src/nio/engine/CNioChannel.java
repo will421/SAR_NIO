@@ -41,7 +41,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 	public void send(ByteBuffer buf) {
 
 		buffer_channel = buf.duplicate();
-		nEngine.wantToWrite(this, buffer_channel);
+	//	nEngine.wantToWrite(this, buffer_channel);
 	}
 
 	@Override
