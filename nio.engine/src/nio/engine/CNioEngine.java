@@ -28,13 +28,18 @@ public class CNioEngine extends NioEngine {
 	
 	public Selector selector;
 	//Hashtable<Integer,ServerSocketChannel> listening;
-	Hashtable<Integer,Paire<NioServer,AcceptCallback>> listening;
+	Hashtable<ServerSocketChannel,AcceptCallback> listening;
 	Hashtable<SocketChannel,ConnectCallback> connecting;
+	Hashtable<ServerSocketChannel,NioServer> nioServers;
+	Hashtable<SocketChannel,NioChannel> nioChannels;
 	
 	public CNioEngine() throws Exception {
 
 		selector = Selector.open();
-		listening = new Hashtable<Integer, CNioEngine.Paire<NioServer,AcceptCallback>>();
+		listening = new Hashtable<ServerSocketChannel, AcceptCallback>();
+		connecting = new Hashtable<SocketChannel, ConnectCallback>();
+		nioServers = new Hashtable<ServerSocketChannel, NioServer>();
+		nioChannels = new Hashtable<SocketChannel, NioChannel>();
 		// TODO Auto-generated constructor stub 
 	}
 
@@ -85,8 +90,8 @@ public class CNioEngine extends NioEngine {
 		ssc.socket().bind(isa);
 		ssc.register(selector, SelectionKey.OP_ACCEPT);
 		NioServer nServer = new CNioServer(ssc);
-		Paire<NioServer,AcceptCallback> p = new Paire<NioServer,AcceptCallback>(nServer,callback);
-		listening.put(port, p);
+		listening.put(ssc, callback);
+		nioServers.put(ssc, nServer);
 		return nServer;
 	}
 
@@ -113,20 +118,15 @@ public class CNioEngine extends NioEngine {
 		try {
 			socketChannel = serverSocketChannel.accept();
 			socketChannel.configureBlocking(false);
+			socketChannel.register(this.selector, SelectionKey.OP_READ);
+			
+			AcceptCallback callback = listening.get(serverSocketChannel);
+			NioChannel nChannel = new CNioChannel(socketChannel);
+			callback.accepted(nioServers.get(serverSocketChannel), nChannel);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
-		}
-		try {
-			socketChannel.register(this.selector, SelectionKey.OP_READ);
-		} catch (ClosedChannelException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-		Paire<NioServer,AcceptCallback> p = listening.get(serverSocketChannel.socket().getLocalPort());
-		NioChannel nChannel = new CNioChannel(socketChannel);
-		p.second.accepted(p.premier, nChannel);
-		
+		} 
 	}
 	
 	/**
