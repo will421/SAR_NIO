@@ -1,5 +1,8 @@
 package nio.engine;
 
+import java.io.IOException;
+import java.net.InetAddress;
+
 public class PingPongSimple {
 
 	static String prefServer = "[Server]";
@@ -7,13 +10,70 @@ public class PingPongSimple {
 	
 	public static void server (int port)
 	{
-		
 		System.out.println(prefServer+"Server launched with port= "+port);
+		NioEngine engine = null;
+		try {
+			engine = new CNioEngine();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		try {
+			engine.listen(port, new AcceptCallback() {
+
+				@Override
+				public void closed(NioChannel channel) {
+					System.out.println(prefServer+"AcceptCallback closed");
+
+				}
+
+				@Override
+				public void accepted(NioServer server, NioChannel channel) {
+					System.out.println(prefServer+"AcceptCallback accepted");
+
+				}
+			});
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		engine.mainloop();
 	}
 	
 	public static void client(String adr,int port)
 	{
 		System.out.println(prefClient+"Client launched, it will connect to "+adr+":"+port);
+		NioEngine engine = null;
+		try {
+			engine = new CNioEngine();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(1);
+		}
+		try {
+			engine.connect(InetAddress.getByName(adr), port, new ConnectCallback() {
+				
+				@Override
+				public void connected(NioChannel channel) {
+					System.out.println(prefClient+"ConnectCallback connected");
+					
+				}
+				
+				@Override
+				public void closed(NioChannel channel) {
+					System.out.println(prefClient+"ConnectCallback closed");
+					
+				}
+			});
+		} catch (SecurityException | IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		engine.mainloop();
 		
 	}
 	
@@ -24,7 +84,7 @@ public class PingPongSimple {
 			public void run() {
 				server(4211);
 			}
-		}).run();
+		}).start();
 		
 		try {
 			Thread.sleep(1000);
@@ -37,7 +97,7 @@ public class PingPongSimple {
 			public void run() {
 				client("localhost",4211);
 			}
-		}).run();
+		}).start();
 	}
 
 }
