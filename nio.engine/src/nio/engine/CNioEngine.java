@@ -170,39 +170,39 @@ public class CNioEngine extends NioEngine {
 	private void handleRead(SelectionKey key){
 		
 		SocketChannel socketChannel = (SocketChannel) key.channel(); 
-		int length = BUFFER_SIZE;
-		ByteBuffer inBuffer = ByteBuffer.allocate(length);
-		int numRead;
-		try {
-			numRead = socketChannel.read(inBuffer);
-		} catch (IOException e) { 
-			// The remote forcibly closed the connection, cancel the selection key and close the channel. 
-			e.printStackTrace();
-			key.cancel(); 
-			try {
-				socketChannel.close();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-				System.exit(1);
-			} 
-			return; 
-		} 
-		
-		if (numRead == -1) { 
-			// Remote entity shut the socket down cleanly. Do the same from our end and cancel the channel. 
-			try {
-				key.channel().close();
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-			key.cancel(); 
-			//Callback close
-			return; 
-		} 
-		
+//		int length = BUFFER_SIZE;
+//		ByteBuffer inBuffer = ByteBuffer.allocate(length);
+//		int numRead;
+//		try {
+//			numRead = socketChannel.read(inBuffer);
+//		} catch (IOException e) { 
+//			// The remote forcibly closed the connection, cancel the selection key and close the channel. 
+//			e.printStackTrace();
+//			key.cancel(); 
+//			try {
+//				socketChannel.close();
+//			} catch (IOException e1) {
+//				e1.printStackTrace();
+//				System.exit(1);
+//			} 
+//			return; 
+//		} 
+//		
+//		if (numRead == -1) { 
+//			// Remote entity shut the socket down cleanly. Do the same from our end and cancel the channel. 
+//			try {
+//				key.channel().close();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//				System.exit(1);
+//			}
+//			key.cancel(); 
+//			//Callback close
+//			return; 
+//		} 
+//		
 		//Process data
-		nioChannels.get(socketChannel).received(inBuffer.array(), numRead);
+		nioChannels.get(socketChannel).received();
 		
 		
 		/*SocketChannel socketChannel = (SocketChannel) key.channel(); 
@@ -277,3 +277,4 @@ public class CNioEngine extends NioEngine {
 	
 	
 }
+0
