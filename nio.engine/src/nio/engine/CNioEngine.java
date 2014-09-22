@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -13,6 +14,9 @@ import java.util.Hashtable;
 import java.util.Iterator;
 
 public class CNioEngine extends NioEngine {
+	
+	
+	static int BUFFER_SIZE=10000;
 	
 	private class Paire<T,U> {
 		Paire(T premier,U second)
@@ -30,16 +34,16 @@ public class CNioEngine extends NioEngine {
 	//Hashtable<Integer,ServerSocketChannel> listening;
 	Hashtable<ServerSocketChannel,AcceptCallback> listening;
 	Hashtable<SocketChannel,ConnectCallback> connecting;
-	Hashtable<ServerSocketChannel,NioServer> nioServers;
-	Hashtable<SocketChannel,NioChannel> nioChannels;
+	Hashtable<ServerSocketChannel,CNioServer> nioServers;
+	Hashtable<SocketChannel,CNioChannel> nioChannels;
 	
 	public CNioEngine() throws Exception {
 
 		selector = Selector.open();
 		listening = new Hashtable<ServerSocketChannel, AcceptCallback>();
 		connecting = new Hashtable<SocketChannel, ConnectCallback>();
-		nioServers = new Hashtable<ServerSocketChannel, NioServer>();
-		nioChannels = new Hashtable<SocketChannel, NioChannel>();
+		nioServers = new Hashtable<ServerSocketChannel, CNioServer>();
+		nioChannels = new Hashtable<SocketChannel, CNioChannel>();
 		// TODO Auto-generated constructor stub 
 	}
 
@@ -89,7 +93,7 @@ public class CNioEngine extends NioEngine {
 		InetSocketAddress isa = new InetSocketAddress("localhost", port);
 		ssc.socket().bind(isa);
 		ssc.register(selector, SelectionKey.OP_ACCEPT);
-		NioServer nServer = new CNioServer(ssc);
+		CNioServer nServer = new CNioServer(ssc);
 		listening.put(ssc, callback);
 		nioServers.put(ssc, nServer);
 		return nServer;
@@ -147,7 +151,7 @@ public class CNioEngine extends NioEngine {
 			return;
 		}
 		key.interestOps(key.interestOps() | SelectionKey.OP_READ);
-		NioChannel nChannel = new CNioChannel(socketChannel);
+		CNioChannel nChannel = new CNioChannel(socketChannel);
 		nioChannels.put(socketChannel, nChannel);
 		connecting.get(socketChannel).connected(nChannel);
 	}
@@ -157,7 +161,44 @@ public class CNioEngine extends NioEngine {
 	 * Handle incoming data event
 	 * @param the key of the channel on which the incoming data waits to be received 
 	 */
-	private void handleRead(SelectionKey key) throws IOException{
+	private void handleRead(SelectionKey key){
+		
+		SocketChannel socketChannel = (SocketChannel) key.channel(); 
+		int length = BUFFER_SIZE;
+		ByteBuffer inBuffer = ByteBuffer.allocate(length);
+		int numRead;
+		try {
+			numRead = socketChannel.read(inBuffer);
+		} catch (IOException e) { 
+			// The remote forcibly closed the connection, cancel the selection key and close the channel. 
+			e.printStackTrace();
+			key.cancel(); 
+			try {
+				socketChannel.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				System.exit(1);
+			} 
+			return; 
+		} 
+		
+		if (numRead == -1) { 
+			// Remote entity shut the socket down cleanly. Do the same from our end and cancel the channel. 
+			try {
+				key.channel().close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+			key.cancel(); 
+			//Callback close
+			return; 
+		} 
+		
+		//Process data
+		nioChannels.get(socketChannel).received(inBuffer.array(), numRead);
+		
+		
 		/*SocketChannel socketChannel = (SocketChannel) key.channel(); 
 		int length = BUFFER_SIZE;
 		inBuffer = ByteBuffer.allocate(length); 

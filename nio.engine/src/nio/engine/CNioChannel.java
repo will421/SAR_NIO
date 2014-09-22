@@ -11,15 +11,16 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 	
 	ByteBuffer buffer_channel;
 	private DeliverCallback callback;
+	private CNioEngine nioEngine;
+	private SocketChannel socketChannel;
 
 	public CNioChannel(SocketChannel socketChannel) {
-		// TODO Auto-generated constructor stub
+		this.socketChannel = socketChannel;
 	}
 
 	@Override
 	public SocketChannel getChannel() {
-
-		return null;
+		return socketChannel;
 	}
 
 	@Override
@@ -60,6 +61,13 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		// TODO Auto-generated method stub
 
 	}
+	
+	public void received(byte[] bytes, int length)
+	{
+		//Ici, l'automate
+		
+	}
+	
 /*
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {
