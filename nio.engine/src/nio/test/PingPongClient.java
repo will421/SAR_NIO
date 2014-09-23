@@ -61,5 +61,12 @@ public class PingPongClient implements ConnectCallback,Runnable
 	}
 
 
+	@Override
+	public void deliver(NioChannel channel, ByteBuffer bytes) {
+		System.out.println(prefClient+"Message reçu");
+		
+	}
+
+
 }
 

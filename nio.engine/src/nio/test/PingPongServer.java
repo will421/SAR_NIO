@@ -53,6 +53,30 @@ public class PingPongServer implements AcceptCallback,Runnable
 		engine.mainloop();
 
 	}	
+<<<<<<< HEAD
+=======
+	
+	@Override
+	public void closed(NioChannel channel) {
+		System.out.println(prefServer+"AcceptCallback closed");
+
+	}
+
+	@Override
+	public void accepted(NioServer server, NioChannel channel) {
+		System.out.println(prefServer+"AcceptCallback accepted");
+
+	}
+
+
+	@Override
+	public void deliver(NioChannel channel, ByteBuffer bytes) {
+		System.out.println(prefServer+"Message recu:"+ bytes.toString());
+		
+	}
+
+
+>>>>>>> parent of 19db53e... Ping pong pret, plus qu'à faire marcher
 
 
 }
