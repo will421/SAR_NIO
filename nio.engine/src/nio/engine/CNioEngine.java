@@ -18,15 +18,6 @@ public class CNioEngine extends NioEngine {
 
 	static int BUFFER_SIZE = 10000;
 
-	private class Paire<T, U> {
-		Paire(T premier, U second) {
-			this.premier = premier;
-			this.second = second;
-		}
-
-		public T premier;
-		public U second;
-	}
 
 	public Selector selector;
 	//Hashtable<ServerSocketChannel, AcceptCallback> listening;
