@@ -53,8 +53,7 @@ public class PingPongServer implements AcceptCallback,Runnable
 		engine.mainloop();
 
 	}	
-<<<<<<< HEAD
-=======
+
 	
 	@Override
 	public void closed(NioChannel channel) {
@@ -76,7 +75,6 @@ public class PingPongServer implements AcceptCallback,Runnable
 	}
 
 
->>>>>>> parent of 19db53e... Ping pong pret, plus qu'à faire marcher
 
 
 }
