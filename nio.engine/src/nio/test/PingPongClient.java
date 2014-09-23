@@ -2,13 +2,15 @@ package nio.test;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 
 import nio.engine.CNioEngine;
 import nio.engine.ConnectCallback;
+import nio.engine.DeliverCallback;
 import nio.engine.NioChannel;
 import nio.engine.NioEngine;
 
-public class PingPongClient implements ConnectCallback,Runnable
+public class PingPongClient implements Runnable,ConnectCallback,DeliverCallback
 {
 	static final String prefClient = "[Client]";
 
@@ -57,9 +59,20 @@ public class PingPongClient implements ConnectCallback,Runnable
 		clientChannel = channel;
 		String ping = "Ping";
 		channel.send(ping.getBytes(),0,ping.getBytes().length);
+		ByteBuffer buf =  ByteBuffer.allocate(ping.getBytes().length);
+		buf.put(ping.getBytes());
+		channel.send(buf);
 
 	}
 
+	@Override
+	public void deliver(NioChannel channel, ByteBuffer bytes) {
+		System.out.println(prefClient+"Message reçu");
+		
+	}
 
+	
+	
+	
 }
 
