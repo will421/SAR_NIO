@@ -67,7 +67,9 @@ public class PingPongClient implements Runnable,ConnectCallback,DeliverCallback
 
 	@Override
 	public void deliver(NioChannel channel, ByteBuffer bytes) {
-		System.out.println(prefClient+"Message reçu");
+		System.out.println(prefClient+"Message recu:"+ bytes.toString());
+		String ping = "Ping";
+		channel.send(ping.getBytes(),0,ping.getBytes().length);
 		
 	}
 
