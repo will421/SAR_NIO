@@ -1,4 +1,4 @@
-package nio.engine;
+package nio.implentation1;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,19 +14,14 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import nio.engine.AcceptCallback;
+import nio.engine.ConnectCallback;
+import nio.engine.NioEngine;
+import nio.engine.NioServer;
+
 public class CNioEngine extends NioEngine {
 
 	static int BUFFER_SIZE = 10000;
-
-	private class Paire<T, U> {
-		Paire(T premier, U second) {
-			this.premier = premier;
-			this.second = second;
-		}
-
-		public T premier;
-		public U second;
-	}
 
 	public Selector selector;
 	//Hashtable<ServerSocketChannel, AcceptCallback> listening;
@@ -170,8 +165,13 @@ public class CNioEngine extends NioEngine {
 			key.cancel();
 			return;
 		}
-		key.interestOps(key.interestOps() | SelectionKey.OP_READ);
-		CNioChannel nChannel = new CNioChannel(socketChannel, this);
+		key.interestOps(SelectionKey.OP_READ);
+		int a =SelectionKey.OP_CONNECT;
+		int b= SelectionKey.OP_ACCEPT;
+		int c = SelectionKey.OP_READ;
+		int d = SelectionKey.OP_WRITE;
+		
+		CNioChannel nChannel  = new CNioChannel(socketChannel, this);
 		nioChannels.put(socketChannel, nChannel);
 		connecting.get(socketChannel).connected(nChannel);
 		
@@ -201,18 +201,14 @@ public class CNioEngine extends NioEngine {
 	 */
 	private void handleWrite(SelectionKey key) throws IOException {
 
-		/*
-		 * System.out.println("handleWriteClient"); SocketChannel socketChannel
-		 * = (SocketChannel) key.channel(); // outBuffer contains the data to
-		 * write try { // Be aware thatthe write may be incomplete
-		 * socketChannel.write(outBuffer);
-		 * key.interestOps(SelectionKey.OP_READ); } catch (IOException e) { //
-		 * The channel has been closed try { key.cancel();
-		 * socketChannel.close(); } catch (IOException e1) {
-		 * System.out.println("Erreur à la fermeture du socket"); } return; }
-		 */
 
-		if(true)
+		SocketChannel socketChannel = (SocketChannel) key.channel();
+		CNioChannel nChannel = nioChannels.get(socketChannel);
+		boolean res = nChannel.sendAutomatton();
+		
+		if(res) 
+			// Pour retirer l'interet en ecriture, uniquement dans le cas où plus rien à ecrire
+			// Dependera de la valeur de retour de automate
 			key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
 	}
 
@@ -220,12 +216,11 @@ public class CNioEngine extends NioEngine {
 	public void wantToWrite(CNioChannel nChannel)
 	{
 		try {
-				nChannel.getChannel().register(selector, SelectionKey.OP_WRITE);
+				nChannel.getChannel().register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ);
 		} catch (ClosedChannelException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
-
 	}
 
 }

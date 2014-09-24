@@ -1,0 +1,196 @@
+package nio.implentation1;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.Hashtable;
+import java.util.LinkedList;
+
+import nio.engine.DeliverCallback;
+import nio.engine.NioChannel;
+
+
+
+public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
+
+
+	private LinkedList<ByteBuffer> buffers_out;
+	private ByteBuffer currentBufferOut;
+	private ByteBuffer outBufferLength;
+	
+	private ByteBuffer buffer_length;
+	private ByteBuffer buffer_read = null;
+
+	private DeliverCallback callback;
+	private SocketChannel socketChannel;
+	private CNioEngine nEngine;
+
+
+	// Declaration of Automaton state for the read-auomaton
+	enum READING_STATE {
+		READING_DONE,
+		READING_LENGTH,
+		READING_MSG
+	}
+	enum SENDING_STATE {
+		SENDING_DONE,
+		SENDING_LENGTH,
+		SENDING_MSG
+	}
+	
+
+	READING_STATE currentReadingState = READING_STATE.READING_DONE; 
+	SENDING_STATE currentSendingState = SENDING_STATE.SENDING_DONE;
+	
+
+
+
+	public CNioChannel(SocketChannel socketChannel,CNioEngine nEngine) {
+		this.socketChannel = socketChannel;
+		this.nEngine = nEngine;
+		this.buffers_out = new LinkedList<ByteBuffer>();
+		buffer_length = ByteBuffer.allocate(4);
+		outBufferLength = ByteBuffer.allocate(4);
+	}
+
+	@Override
+	public SocketChannel getChannel() {
+		return socketChannel;
+	}
+
+	@Override
+	public void setDeliverCallback(DeliverCallback callback) {
+		this.callback = callback;
+
+	}
+
+	@Override
+	public InetSocketAddress getRemoteAddress() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void send(ByteBuffer buf) {
+
+		//ByteBuffer temp = buf.duplicate();
+		buffers_out.add(buf);
+		nEngine.wantToWrite(this);
+	}
+
+	@Override
+	public void send(byte[] bytes, int offset, int length) {
+
+		ByteBuffer buffer = ByteBuffer.allocate(length);
+		
+		for(int i =offset;i<offset+length;i++)
+		{
+			buffer.put(bytes[i]);
+		}
+
+		send(buffer);
+
+	}
+
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+
+	}
+
+	public void readAutomaton()
+	{
+		//Penser à boucler un peu au cas où le buffer NIO contienne plusieurs messages
+		
+		if(currentReadingState == READING_STATE.READING_DONE)//reinit buffers
+		{
+			buffer_read = null;	
+			buffer_length.position(0); // on se reposition au début pour ecraser et réécrire dessus
+			currentReadingState = READING_STATE.READING_LENGTH;
+		}
+			
+		if (currentReadingState == READING_STATE.READING_LENGTH) { // Lecture de la taille totale du message 
+			try {
+				socketChannel.read(buffer_length);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+			
+			if(buffer_length.remaining()==0){
+				buffer_length.position(0);
+				int length_msg = buffer_length.getInt();
+				buffer_read = ByteBuffer.allocate(length_msg);
+				currentReadingState = READING_STATE.READING_MSG;
+			}
+		}
+
+		if ( currentReadingState == READING_STATE.READING_MSG ){
+			
+			// routine lecture message
+			try {
+				socketChannel.read(buffer_read);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+			
+			if( buffer_read.remaining() == 0 ) {
+				//lecture complète on envoie
+				//callback
+				callback.deliver(this, buffer_read.duplicate()); //duplicate car le buffer est ecrasé pour la prochaine reception, l'utilisateur peut perdre son message
+
+				currentReadingState = READING_STATE.READING_DONE;
+			}
+
+		}
+
+
+	}
+
+	public boolean sendAutomatton() {
+		//retourne true si il n'y a plus rien a envoyer
+		//Penser à continuer l'envoi si il reste de la place dans le bufferNio
+		if(currentSendingState == SENDING_STATE.SENDING_DONE)
+		{
+			currentBufferOut = buffers_out.pop();
+			currentBufferOut.position(0);
+			outBufferLength.position(0);
+			outBufferLength.putInt(currentBufferOut.capacity());
+			outBufferLength.position(0);
+			currentSendingState = SENDING_STATE.SENDING_LENGTH;
+		}
+		
+		if (currentSendingState == SENDING_STATE.SENDING_LENGTH) { // Lecture de la taille totale du message 
+			try {
+				socketChannel.write(outBufferLength);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+			if(outBufferLength.remaining()==0){
+				currentSendingState = SENDING_STATE.SENDING_MSG;
+			}
+		}
+		
+		if(currentSendingState == SENDING_STATE.SENDING_MSG)
+		{
+			try {
+				socketChannel.write(currentBufferOut);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+			
+			if( currentBufferOut.remaining() == 0 ) {
+				currentSendingState = SENDING_STATE.SENDING_DONE;
+			}
+		}
+		
+
+		return buffers_out.size()==0;
+	}
+
+	
+}

@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 
-import nio.engine.CNioEngine;
 import nio.engine.ConnectCallback;
 import nio.engine.DeliverCallback;
 import nio.engine.NioChannel;
 import nio.engine.NioEngine;
+import nio.implentation1.CNioEngine;
 
 public class PingPongClient implements Runnable,ConnectCallback,DeliverCallback
 {
@@ -17,10 +17,12 @@ public class PingPongClient implements Runnable,ConnectCallback,DeliverCallback
 	NioChannel clientChannel = null;
 	String adr;
 	int port;
+	int n;
 
 	public PingPongClient(String s, int p) {
 		adr = s;
 		port = p;
+		n = 1;
 	}
 
 	@Override
@@ -57,18 +59,21 @@ public class PingPongClient implements Runnable,ConnectCallback,DeliverCallback
 	public void connected(NioChannel channel) {
 		System.out.println(prefClient+"ConnectCallback connected");
 		clientChannel = channel;
-		String ping = "Ping";
+		clientChannel.setDeliverCallback(this);
+		String ping = "Ping"+n;
+		n++;
 		channel.send(ping.getBytes(),0,ping.getBytes().length);
-		ByteBuffer buf =  ByteBuffer.allocate(ping.getBytes().length);
-		buf.put(ping.getBytes());
-		channel.send(buf);
+		//ByteBuffer buf =  ByteBuffer.allocate(ping.getBytes().length);
+		//buf.put(ping.getBytes());
+		//channel.send(buf);
 
 	}
 
 	@Override
 	public void deliver(NioChannel channel, ByteBuffer bytes) {
-		System.out.println(prefClient+"Message recu:"+ bytes.toString());
-		String ping = "Ping";
+		System.out.println(prefClient+"Message recu :"+ new String(bytes.array()));
+		String ping = "Ping"+n;
+		n++;
 		channel.send(ping.getBytes(),0,ping.getBytes().length);
 		
 	}
