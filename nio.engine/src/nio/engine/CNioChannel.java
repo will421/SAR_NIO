@@ -68,7 +68,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		while (length != 0 ){
 
 
-			this.buffer_out.put(bytes[length]);
+			this.buffer_out.put(bytes[length-1]);
 
 			offset++;
 			length--;
