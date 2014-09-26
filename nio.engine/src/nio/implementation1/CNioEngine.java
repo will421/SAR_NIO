@@ -1,4 +1,4 @@
-package nio.implentation1;
+package nio.implementation1;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -31,7 +31,7 @@ public class CNioEngine extends NioEngine {
 
 	public CNioEngine() throws Exception {
 
-
+		
 		selector = Selector.open();
 		//listening = new Hashtable<ServerSocketChannel, AcceptCallback>();
 		connecting = new Hashtable<SocketChannel, ConnectCallback>();
@@ -41,7 +41,7 @@ public class CNioEngine extends NioEngine {
 	}
 
 	@Override
-	public void mainloop() {
+	public void mainloop() {		
 		while (true) {
 			try {
 
@@ -166,10 +166,6 @@ public class CNioEngine extends NioEngine {
 			return;
 		}
 		key.interestOps(SelectionKey.OP_READ);
-		int a =SelectionKey.OP_CONNECT;
-		int b= SelectionKey.OP_ACCEPT;
-		int c = SelectionKey.OP_READ;
-		int d = SelectionKey.OP_WRITE;
 		
 		CNioChannel nChannel  = new CNioChannel(socketChannel, this);
 		nioChannels.put(socketChannel, nChannel);

@@ -1,4 +1,4 @@
-package nio.implentation1;
+package nio.implementation1;
 
 import java.io.IOException;
 import java.io.ObjectInputStream.GetField;

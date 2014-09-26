@@ -1,4 +1,4 @@
-package nio.test;
+package nio.test.PingPong;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -8,7 +8,7 @@ import nio.engine.ConnectCallback;
 import nio.engine.NioChannel;
 import nio.engine.NioEngine;
 import nio.engine.NioServer;
-import nio.implentation1.CNioEngine;
+import nio.implementation1.CNioEngine;
 
 
 	
