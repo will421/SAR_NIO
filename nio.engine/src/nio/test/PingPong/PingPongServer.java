@@ -63,10 +63,14 @@ public class PingPongServer implements Runnable,AcceptCallback,DeliverCallback
 
 	@Override
 	public void deliver(NioChannel channel, ByteBuffer bytes) {
-		System.out.println(prefServer+"Message recu :"+ new String(bytes.array()));
-		String ping = "Pong"+n;
-		n++;
-		channel.send(ping.getBytes(),0,ping.getBytes().length);
+		String message = new String(bytes.array());
+		System.out.println(prefServer+"Message recu :"+ message);
+		if(message.contains("Ping"))
+		{
+			String ping = "Pong"+n;
+			n++;
+			channel.send(ping.getBytes(),0,ping.getBytes().length);
+		} 
 	}
 
 
