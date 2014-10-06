@@ -1,4 +1,4 @@
-package nio.test.PingPong;
+package niot.test.PingPong_V2;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,13 +11,13 @@ import nio.engine.NioEngine;
 import nio.engine.NioServer;
 import nio.implementation1.CNioEngine;
 
-public class PingPongServer implements Runnable,AcceptCallback,DeliverCallback
+public class PingPongServer_V2 implements Runnable,AcceptCallback,DeliverCallback
 {
 	static final String prefServer = "[Server]";
 	int port;
 	int n;
 
-	public PingPongServer(int p) {
+	public PingPongServer_V2(int p) {
 		port = p;
 		n=1;
 	}

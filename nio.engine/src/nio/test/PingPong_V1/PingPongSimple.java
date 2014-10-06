@@ -1,4 +1,4 @@
-package nio.test.PingPong;
+package nio.test.PingPong_V1;
 
 import java.io.IOException;
 import java.net.InetAddress;

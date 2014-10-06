@@ -1,8 +1,9 @@
-package nio.test.PingPong;
+package niot.test.PingPong_V2;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.util.Random;
 
 import nio.engine.ConnectCallback;
 import nio.engine.DeliverCallback;
@@ -10,30 +11,32 @@ import nio.engine.NioChannel;
 import nio.engine.NioEngine;
 import nio.implementation1.CNioEngine;
 
-public class PingPongClient implements Runnable,ConnectCallback,DeliverCallback
+public class PingPongClient_V2 implements Runnable,ConnectCallback,DeliverCallback
 {
-	static final String prefClient = "[Client]";
-
+	static public final int LG_MESSAGE = 25; // en octets
+	
+	
+	String prefClient = "";
 	NioChannel clientChannel = null;
 	String adr;
 	int port;
 	int n;
 
-	public PingPongClient(String s, int p) {
+	public PingPongClient_V2(String s, int p,int i) {
 		adr = s;
 		port = p;
 		n = 1;
+		prefClient = "[Client "+ i +"]";
 	}
 
 	@Override
 	public void run() {
 		NioChannel nChannel = null;
-		System.out.println(prefClient+"Client launched, it will connect to "+adr+":"+port);
+		System.out.println(prefClient+"Client : launched, it will connect to "+adr+":"+port);
 		NioEngine engine = null;
 		try {
 			engine = new CNioEngine();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -56,6 +59,8 @@ public class PingPongClient implements Runnable,ConnectCallback,DeliverCallback
 	}
 
 	@Override
+
+
 	public void connected(NioChannel channel) {
 		System.out.println(prefClient+"ConnectCallback connected");
 		clientChannel = channel;
@@ -78,7 +83,6 @@ public class PingPongClient implements Runnable,ConnectCallback,DeliverCallback
 		
 	}
 
-	
 	
 	
 }
