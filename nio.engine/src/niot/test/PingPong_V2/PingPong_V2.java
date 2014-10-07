@@ -1,6 +1,5 @@
 package niot.test.PingPong_V2;
 
-import java.io.IOException;
 import java.net.InetAddress;
 
 import nio.engine.AcceptCallback;
