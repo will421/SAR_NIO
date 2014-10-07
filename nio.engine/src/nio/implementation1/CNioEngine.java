@@ -71,7 +71,7 @@ public class CNioEngine extends NioEngine {
 					} else
 						System.out.println("  ---> unknow key=" + key);
 				}
-			} catch (Exception e) {
+			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(1);
 			}
@@ -181,11 +181,19 @@ public class CNioEngine extends NioEngine {
 	 *            received
 	 * @throws IOException
 	 */
-	private void handleRead(SelectionKey key) throws IOException {
+	private void handleRead(SelectionKey key) {
 
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		nioChannels.get(socketChannel).readAutomaton();
+		try {
+			nioChannels.get(socketChannel).readAutomaton();
+		} catch (ClosedChannelException e) {
+			handleSocketToClose(socketChannel, key);
+			return;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
@@ -195,12 +203,21 @@ public class CNioEngine extends NioEngine {
 	 * @param the
 	 *            key of the channel on which data can be sent
 	 */
-	private void handleWrite(SelectionKey key) throws IOException {
+	private void handleWrite(SelectionKey key) {
 
 
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 		CNioChannel nChannel = nioChannels.get(socketChannel);
-		boolean res = nChannel.sendAutomatton();
+		boolean res = false;
+		try {
+			res = nChannel.sendAutomatton();
+		} catch (ClosedChannelException e) {
+			handleSocketToClose(socketChannel, key);
+			return;
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 		
 		if(res) 
 			// Pour retirer l'interet en ecriture, uniquement dans le cas où plus rien à ecrire
@@ -212,11 +229,18 @@ public class CNioEngine extends NioEngine {
 	public void wantToWrite(CNioChannel nChannel)
 	{
 		try {
-				nChannel.getChannel().register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ);
+			nChannel.getChannel().register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ);
 		} catch (ClosedChannelException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
+	}
+	
+	public void handleSocketToClose(SocketChannel socketChannel,SelectionKey key)
+	{
+		System.out.println("----------- On ferme ce socket !----------");
+		nioChannels.remove(socketChannel).close();
+		key.cancel();
 	}
 
 }

@@ -1,4 +1,4 @@
-package niot.test.PingPong_V2;
+package nio.test.PingPong_V2;
 
 import java.io.IOException;
 

@@ -1,5 +1,6 @@
-package niot.test.PingPong_V2;
+package nio.test.PingPong_Close;
 
+import java.io.IOException;
 import java.net.InetAddress;
 
 import nio.engine.AcceptCallback;
@@ -8,9 +9,10 @@ import nio.engine.NioChannel;
 import nio.engine.NioEngine;
 import nio.engine.NioServer;
 import nio.implementation1.CNioEngine;
+import nio.test.PingPong_V2.BreakdownSimulator;
 
 
-public class PingPong_V2{
+public class PingPong_close{
 
 	
 	static public final int NB_CLIENTS = 1;
@@ -20,8 +22,14 @@ public class PingPong_V2{
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stu
-		new Thread(new PingPongServer_V2(4211)).start();
+		BreakdownSimulator bds = new BreakdownSimulator();
+		Thread t;
+		
+		t= new Thread(new PingPongServer_close(4211));
+		t.start();
+		bds.add(t);
 
+		
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
@@ -30,9 +38,13 @@ public class PingPong_V2{
 		}
 
 	
-		for  (int i= 1;i<= PingPong_V2.NB_CLIENTS;i++){
-			new Thread(new PingPongClient_V2("localhost",4211,i)).start();
+		for  (int i= 1;i<= PingPong_close.NB_CLIENTS;i++){
+			t= new Thread(new PingPongClient_close("localhost",4211,i));
+			t.start();
+			bds.add(t);
 		}
+		
+		new Thread(bds).start();
 		
 	}
 
