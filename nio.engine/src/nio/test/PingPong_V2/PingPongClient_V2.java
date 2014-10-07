@@ -2,6 +2,8 @@ package nio.test.PingPong_V2;
 
 import java.io.IOException;
 
+import util.string.*;
+
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Random;
@@ -10,13 +12,11 @@ import nio.engine.ConnectCallback;
 import nio.engine.DeliverCallback;
 import nio.engine.NioChannel;
 import nio.engine.NioEngine;
+import nio.engine.Options;
 import nio.implementation1.CNioEngine;
 
 public class PingPongClient_V2 implements Runnable,ConnectCallback,DeliverCallback
 {
-	static public final int LG_MESSAGE = 4  ; // Nb carac
-	static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	static Random rnd = new Random();
 	
 	String prefClient = "";
 	NioChannel clientChannel = null;
@@ -68,39 +68,25 @@ public class PingPongClient_V2 implements Runnable,ConnectCallback,DeliverCallba
 		clientChannel = channel;
 		clientChannel.setDeliverCallback(this);
 
-		String msg = randomString(LG_MESSAGE);		
-		n++;
+		String msg = randomString.rdmString(Options.LG_MESSAGE_CLIENT);		
 		channel.send(msg.getBytes(),0,msg.getBytes().length);
-		//ByteBuffer buf =  ByteBuffer.allocate(ping.getBytes().length);
-		//buf.put(ping.getBytes());
-		//channel.send(buf);
+
 
 	}
 
 	@Override
 	public void deliver(NioChannel channel, ByteBuffer bytes) {
+		
 		System.out.println(prefClient+"Message recu :"+ new String(bytes.array()));
-		String ping = "Ping"+n;
-		n++;
-		channel.send(ping.getBytes(),0,ping.getBytes().length);
+		
+		String msg = randomString.rdmString(Options.LG_MESSAGE_CLIENT);
+		
+		System.out.println(prefClient+"Message envoyé : "+ msg );
+		
+		channel.send(msg.getBytes(),0,msg.getBytes().length);
 		
 	}
 
-	
-	
-	
-
-	String randomString( int len ) 
-	{
-	   StringBuilder sb = new StringBuilder( len );
-	   for( int i = 0; i < len; i++ ) 
-	      sb.append( AB.charAt( rnd.nextInt(AB.length()) ) );
-	   return sb.toString();
-	}
-	
-	
-	
-	
 	
 	
 }

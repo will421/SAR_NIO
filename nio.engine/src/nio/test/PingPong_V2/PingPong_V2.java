@@ -7,15 +7,12 @@ import nio.engine.ConnectCallback;
 import nio.engine.NioChannel;
 import nio.engine.NioEngine;
 import nio.engine.NioServer;
+import nio.engine.Options;
 import nio.implementation1.CNioEngine;
 
 
 public class PingPong_V2{
 
-	
-	static public final int NB_CLIENTS = 2;
-	static public final int NB_MESSAGE = 1;
-	
 	
 	
 	public static void main(String[] args) {
@@ -28,8 +25,7 @@ public class PingPong_V2{
 			System.exit(1);
 		}
 
-	
-		for  (int i= 1;i<= PingPong_V2.NB_CLIENTS;i++){
+		for  (int i= 1;i<= Options.NB_CLIENTS;i++){
 			new Thread(new PingPongClient_V2("localhost",4211,i)).start();
 		}
 		

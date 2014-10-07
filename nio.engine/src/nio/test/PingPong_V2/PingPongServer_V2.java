@@ -1,6 +1,9 @@
 package nio.test.PingPong_V2;
 
 import java.io.IOException;
+
+import util.string.*;
+
 import java.nio.ByteBuffer;
 
 import nio.engine.AcceptCallback;
@@ -9,10 +12,12 @@ import nio.engine.DeliverCallback;
 import nio.engine.NioChannel;
 import nio.engine.NioEngine;
 import nio.engine.NioServer;
+import nio.engine.Options;
 import nio.implementation1.CNioEngine;
 
 public class PingPongServer_V2 implements Runnable,AcceptCallback,DeliverCallback
 {
+	
 	static final String prefServer = "[Server]";
 	int port;
 	int n;
@@ -63,14 +68,15 @@ public class PingPongServer_V2 implements Runnable,AcceptCallback,DeliverCallbac
 
 	@Override
 	public void deliver(NioChannel channel, ByteBuffer bytes) {
+		
 		String message = new String(bytes.array());
 		System.out.println(prefServer+"Message recu :"+ message);
-		if(message.contains("Ping"))
-		{
-			String ping = "Pong"+n;
-			n++;
-			channel.send(ping.getBytes(),0,ping.getBytes().length);
-		} 
+		
+		String msg = randomString.rdmString(Options.LG_MESSAGE_SERVEUR);
+		
+		System.out.println(prefServer +"Message envoyé : "+ msg );
+		channel.send(msg.getBytes(),0,msg.getBytes().length);
+		
 	}
 
 
