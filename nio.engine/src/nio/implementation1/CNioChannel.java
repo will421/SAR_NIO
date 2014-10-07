@@ -3,6 +3,7 @@ package nio.implementation1;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -123,7 +124,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 	}
 
-	public void readAutomaton()
+	public void readAutomaton() throws ClosedChannelException,IOException
 	{
 		//Penser à boucler un peu au cas où le buffer NIO contienne plusieurs messages
 		
@@ -136,12 +137,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		}
 		if(currentReadingState == READING_STATE.READING_METADATA)
 		{
-			try {
 				socketChannel.read(inBufferMetaData);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
 			
 			if(inBufferMetaData.remaining()==0){
 				inBufferMetaData.position(0);
@@ -152,12 +148,8 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		
 		
 		if (currentReadingState == READING_STATE.READING_LENGTH) { // Lecture de la taille totale du message 
-			try {
 				socketChannel.read(buffer_length);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
+
 			
 			if(buffer_length.remaining()==0){
 				buffer_length.position(0);
@@ -169,12 +161,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 		if ( currentReadingState == READING_STATE.READING_MSG ){
 			// routine lecture message
-			try {
 				socketChannel.read(buffer_read);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
 			
 			if( buffer_read.remaining() == 0 ) {
 				//lecture complète on envoie
@@ -187,13 +174,9 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		{
 			if( (inMetadata & containChecksum)!=0)
 			{
-				
-				try {
+
 					socketChannel.read(inBufferChecksum);
-				} catch (IOException e) {
-					e.printStackTrace();
-					System.exit(1);
-				} 
+
 				
 				if(inBufferChecksum.remaining()==0)
 				{
@@ -226,8 +209,8 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		
 	}
 
-	public boolean sendAutomatton() {
-		//retourne true si il n'y a plus rien a envoyer
+	public boolean sendAutomatton() throws ClosedChannelException,IOException {
+		//retourne true si il n'y a plus ri1en a envoyer
 		//Penser à continuer l'envoi si il reste de la place dans le bufferNio
 		if(currentSendingState == SENDING_STATE.SENDING_DONE)
 		{
@@ -248,24 +231,21 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		
 		if(currentSendingState == SENDING_STATE.SENDING_METADATA)
 		{
-			try {
-				socketChannel.write(outBufferMetaData);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
+			
+					socketChannel.write(outBufferMetaData);
+
+
+				
+				
 			if(outBufferMetaData.remaining()==0){
 				currentSendingState = SENDING_STATE.SENDING_LENGTH;
 			}	
 		}
 		
 		if (currentSendingState == SENDING_STATE.SENDING_LENGTH) { // Lecture de la taille totale du message 
-			try {
+
 				socketChannel.write(outBufferLength);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
+
 			if(outBufferLength.remaining()==0){
 				currentSendingState = SENDING_STATE.SENDING_MSG;
 			}
@@ -273,12 +253,9 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		
 		if(currentSendingState == SENDING_STATE.SENDING_MSG)
 		{
-			try {
+
 				socketChannel.write(currentBufferOut);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
+
 			
 			if( currentBufferOut.remaining() == 0 ) {
 				currentSendingState = SENDING_STATE.SENDING_CHECKSUM;
@@ -292,9 +269,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 					outBufferChecksum.put(checksum);
 					outBufferChecksum.position(0);
 					socketChannel.write(outBufferChecksum);
-				} catch (IOException e) {
-					e.printStackTrace();
-					System.exit(1);
+
 				} catch (NoSuchAlgorithmException e) {
 					e.printStackTrace();
 					System.exit(1);
@@ -329,7 +304,5 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		
 		return java.util.Arrays.equals(bytes,bytes2);
 	}
-	
 
-	
 }

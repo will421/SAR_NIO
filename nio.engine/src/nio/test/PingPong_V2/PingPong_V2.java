@@ -1,4 +1,4 @@
-package niot.test.PingPong_V2;
+package nio.test.PingPong_V2;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,13 +14,12 @@ import nio.implementation1.CNioEngine;
 public class PingPong_V2{
 
 	
-	static public final int NB_CLIENTS = 1;
+	static public final int NB_CLIENTS = 2;
 	static public final int NB_MESSAGE = 1;
 	
 	
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stu
 		new Thread(new PingPongServer_V2(4211)).start();
 
 		try {

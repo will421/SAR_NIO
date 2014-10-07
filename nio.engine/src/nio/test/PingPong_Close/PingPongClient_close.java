@@ -1,4 +1,4 @@
-package niot.test.PingPong_V2;
+package nio.test.PingPong_Close;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -11,22 +11,21 @@ import nio.engine.NioChannel;
 import nio.engine.NioEngine;
 import nio.implementation1.CNioEngine;
 
-public class PingPongClient_V2 implements Runnable,ConnectCallback,DeliverCallback
+public class PingPongClient_close implements Runnable,ConnectCallback,DeliverCallback
 {
 	static public final int LG_MESSAGE = 25; // en octets
 	
-	
 	String prefClient = "";
-	NioChannel clientChannel = null;
-	String adr;
-	int port;
-	int n;
+	private NioChannel clientChannel = null;
+	private String adr;
+	private int port;
+	private int n;
 
-	public PingPongClient_V2(String s, int p,int i) {
+	public PingPongClient_close(String s, int p,int i) {
 		adr = s;
 		port = p;
 		n = 1;
-		prefClient = "[Client "+ i +"]";
+		prefClient = "[Client"+ i +"]";
 	}
 
 	@Override
@@ -79,8 +78,16 @@ public class PingPongClient_V2 implements Runnable,ConnectCallback,DeliverCallba
 		System.out.println(prefClient+"Message recu :"+ new String(bytes.array()));
 		String ping = "Ping"+n;
 		n++;
-		channel.send(ping.getBytes(),0,ping.getBytes().length);
 		
+		/*try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+		
+		channel.send(ping.getBytes(),0,ping.getBytes().length);
+		//if(n>=NB_MESSAGE) Thread.currentThread().interrupt();
 	}
 
 	
