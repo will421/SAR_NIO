@@ -18,7 +18,7 @@ import nio.engine.NioEngine;
 
 
 
-public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
+public class CNioChannel extends NioChannel {
 
 	private static final int isAMessage = 0x1;
 	private static final int containChecksum = 0x2;
@@ -145,8 +145,14 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	public void close() {
+		try {
+			socketChannel.close();
+		} catch (IOException e) {
+			//nothing to do if it is closed
+		}
 		if(cCallback!=null && aCallback==null)
 		{
 			cCallback.closed(this);

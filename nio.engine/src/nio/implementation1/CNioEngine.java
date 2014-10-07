@@ -38,10 +38,8 @@ public class CNioEngine extends NioEngine {
 		
 		startTime = System.currentTimeMillis();
 		
-		
 		while (true) {
 			try {
-
 				selector.select();
 				Iterator<?> selectedKeys = this.selector.selectedKeys()
 						.iterator();
@@ -129,7 +127,6 @@ public class CNioEngine extends NioEngine {
 	 */
 	private void handleAccept(SelectionKey key) {
 		acceptCount ++;
-		
 		
 		SocketChannel socketChannel = null;
 		ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key
