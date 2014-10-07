@@ -44,6 +44,7 @@ public class PingPongServer_close implements Runnable,AcceptCallback,DeliverCall
 			System.exit(1);
 		}
 
+		engine.startEcho();
 		engine.mainloop();
 
 	}	

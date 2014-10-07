@@ -24,27 +24,22 @@ public class CNioEngine extends NioEngine {
 	static int BUFFER_SIZE = 10000;
 
 	public Selector selector;
-	//Hashtable<ServerSocketChannel, AcceptCallback> listening;
-	//Hashtable<SocketChannel, ConnectCallback> connecting;
 	Hashtable<ServerSocketChannel, CNioServer> nioServers;
 	Hashtable<SocketChannel, CNioChannel> nioChannels;
 
 	public CNioEngine() throws Exception {
-
-		
 		selector = Selector.open();
-		//listening = new Hashtable<ServerSocketChannel, AcceptCallback>();
-		//connecting = new Hashtable<SocketChannel, ConnectCallback>();
 		nioServers = new Hashtable<ServerSocketChannel, CNioServer>();
 		nioChannels = new Hashtable<SocketChannel, CNioChannel>();
-
 	}
 
 	@Override
-	public void mainloop() {		
+	public void mainloop() {
+		
+		startTime = System.currentTimeMillis();
+		
 		while (true) {
 			try {
-
 				selector.select();
 				Iterator<?> selectedKeys = this.selector.selectedKeys()
 						.iterator();
@@ -131,6 +126,8 @@ public class CNioEngine extends NioEngine {
 	 *            key of the channel on which a connection is requested
 	 */
 	private void handleAccept(SelectionKey key) {
+		acceptCount ++;
+		
 		SocketChannel socketChannel = null;
 		ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key
 				.channel();
@@ -158,7 +155,9 @@ public class CNioEngine extends NioEngine {
 	 *            key of the channel on which a connection is requested
 	 */
 	private void handleConnection(SelectionKey key) {
-
+		connectCount++;
+		
+		
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 
 		try {
@@ -184,7 +183,9 @@ public class CNioEngine extends NioEngine {
 	 * @throws IOException
 	 */
 	private void handleRead(SelectionKey key) {
-
+		readCount++;
+		
+		
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 
 		try {
@@ -207,7 +208,7 @@ public class CNioEngine extends NioEngine {
 	 *            key of the channel on which data can be sent
 	 */
 	private void handleWrite(SelectionKey key) {
-
+		writeCount++;
 
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 		CNioChannel nChannel = nioChannels.get(socketChannel);
