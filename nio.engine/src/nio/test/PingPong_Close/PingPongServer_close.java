@@ -56,7 +56,7 @@ public class PingPongServer_close implements Runnable,AcceptCallback,DeliverCall
 
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {
-		System.out.println(prefServer+"AcceptCallback accepted");
+		//System.out.println(prefServer+"AcceptCallback accepted");
 		channel.setDeliverCallback(this);
 	}
 
@@ -64,7 +64,7 @@ public class PingPongServer_close implements Runnable,AcceptCallback,DeliverCall
 	@Override
 	public void deliver(NioChannel channel, ByteBuffer bytes) {
 		String message = new String(bytes.array());
-		System.out.println(prefServer+"Message recu :"+ message);
+		//System.out.println(prefServer+"Message recu :"+ message);
 		if(message.contains("Ping"))
 		{
 			String ping = "Pong"+n;

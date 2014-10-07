@@ -10,8 +10,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Hashtable;
 import java.util.LinkedList;
 
+import nio.engine.AcceptCallback;
+import nio.engine.ConnectCallback;
 import nio.engine.DeliverCallback;
 import nio.engine.NioChannel;
+import nio.engine.NioEngine;
 
 
 
@@ -37,7 +40,10 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 	private int inMetadata;
 	private ByteBuffer inBufferChecksum;
 
-	private DeliverCallback callback;
+	private DeliverCallback dCallback;
+	private ConnectCallback cCallback;
+	private AcceptCallback aCallback;
+	
 	private SocketChannel socketChannel;
 	private CNioEngine nEngine;
 
@@ -65,9 +71,30 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 
 
-	public CNioChannel(SocketChannel socketChannel,CNioEngine nEngine) {
+	public CNioChannel(SocketChannel socketChannel,CNioEngine nEngine, ConnectCallback callback) {
 		this.socketChannel = socketChannel;
 		this.nEngine = nEngine;
+		cCallback = callback;
+		
+		
+		this.buffers_out = new LinkedList<ByteBuffer>();
+		buffer_length = ByteBuffer.allocate(4);
+		outBufferLength = ByteBuffer.allocate(4);
+		
+		inBufferMetaData = ByteBuffer.allocate(4);
+		outBufferMetaData = ByteBuffer.allocate(4);
+		
+		inBufferChecksum = ByteBuffer.allocate(16);
+		outBufferChecksum = ByteBuffer.allocate(16);
+	}
+
+	public CNioChannel(SocketChannel socketChannel, CNioEngine nEngine,
+			AcceptCallback callback) {
+		this.socketChannel = socketChannel;
+		this.nEngine = nEngine;
+		aCallback = callback;
+		
+		
 		this.buffers_out = new LinkedList<ByteBuffer>();
 		buffer_length = ByteBuffer.allocate(4);
 		outBufferLength = ByteBuffer.allocate(4);
@@ -86,7 +113,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 	@Override
 	public void setDeliverCallback(DeliverCallback callback) {
-		this.callback = callback;
+		this.dCallback = callback;
 
 	}
 
@@ -120,12 +147,29 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 
 	@Override
 	public void close() {
-		// TODO Auto-generated method stub
-
+		if(cCallback!=null && aCallback==null)
+		{
+			cCallback.closed(this);
+		} 
+		else if( cCallback==null && aCallback!=null)
+		{
+			aCallback.closed(this);
+		}
+		else
+			NioEngine.panic("Les deux callbacks ont été initialisés");
 	}
 
+	public void connected() {
+		cCallback.connected(this);
+	}
+
+	
+	
 	public void readAutomaton() throws ClosedChannelException,IOException
 	{
+		
+		int res = -1;
+		
 		//Penser à boucler un peu au cas où le buffer NIO contienne plusieurs messages
 		
 		if(currentReadingState == READING_STATE.READING_DONE)//reinit buffers
@@ -137,7 +181,9 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		}
 		if(currentReadingState == READING_STATE.READING_METADATA)
 		{
-				socketChannel.read(inBufferMetaData);
+			res =socketChannel.read(inBufferMetaData);
+			if(res==-1)
+				throw new ClosedChannelException();
 			
 			if(inBufferMetaData.remaining()==0){
 				inBufferMetaData.position(0);
@@ -148,8 +194,9 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		
 		
 		if (currentReadingState == READING_STATE.READING_LENGTH) { // Lecture de la taille totale du message 
-				socketChannel.read(buffer_length);
-
+			res = socketChannel.read(buffer_length);
+			if(res==-1)
+				throw new ClosedChannelException();
 			
 			if(buffer_length.remaining()==0){
 				buffer_length.position(0);
@@ -160,9 +207,10 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		}
 
 		if ( currentReadingState == READING_STATE.READING_MSG ){
-			// routine lecture message
-				socketChannel.read(buffer_read);
-			
+			res = socketChannel.read(buffer_read);
+			if(res==-1)
+				throw new ClosedChannelException();
+				
 			if( buffer_read.remaining() == 0 ) {
 				//lecture complète on envoie
 				//callbacke
@@ -174,9 +222,9 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		{
 			if( (inMetadata & containChecksum)!=0)
 			{
-
-					socketChannel.read(inBufferChecksum);
-
+				res = socketChannel.read(inBufferChecksum);
+				if(res==-1)
+					throw new ClosedChannelException();
 				
 				if(inBufferChecksum.remaining()==0)
 				{
@@ -204,7 +252,7 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		}
 		
 		if (currentReadingState == READING_STATE.READING_DONE && (inMetadata & isAMessage)!=0 )
-			callback.deliver(this, buffer_read.duplicate()); //duplicate car le buffer est ecrasé pour la prochaine reception, l'utilisateur peut perdre son messag
+			dCallback.deliver(this, buffer_read.duplicate()); //duplicate car le buffer est ecrasé pour la prochaine reception, l'utilisateur peut perdre son messag
 		
 		
 	}
@@ -269,7 +317,6 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 					outBufferChecksum.put(checksum);
 					outBufferChecksum.position(0);
 					socketChannel.write(outBufferChecksum);
-
 				} catch (NoSuchAlgorithmException e) {
 					e.printStackTrace();
 					System.exit(1);
@@ -304,5 +351,4 @@ public class CNioChannel extends NioChannel /*implements AcceptCallback*/ {
 		
 		return java.util.Arrays.equals(bytes,bytes2);
 	}
-
 }

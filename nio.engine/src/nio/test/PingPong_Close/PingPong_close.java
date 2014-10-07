@@ -15,7 +15,7 @@ import nio.test.PingPong_V2.BreakdownSimulator;
 public class PingPong_close{
 
 	
-	static public final int NB_CLIENTS = 1;
+	static public final int NB_CLIENTS = 20;
 	static public final int NB_MESSAGE = 1;
 	
 	
@@ -27,7 +27,7 @@ public class PingPong_close{
 		
 		t= new Thread(new PingPongServer_close(4211));
 		t.start();
-		bds.add(t);
+		//bds.add(t);
 
 		
 		try {

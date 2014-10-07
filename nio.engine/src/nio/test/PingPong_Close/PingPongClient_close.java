@@ -61,7 +61,7 @@ public class PingPongClient_close implements Runnable,ConnectCallback,DeliverCal
 
 
 	public void connected(NioChannel channel) {
-		System.out.println(prefClient+"ConnectCallback connected");
+		//System.out.println(prefClient+"ConnectCallback connected");
 		clientChannel = channel;
 		clientChannel.setDeliverCallback(this);
 		String ping = "Ping"+n;
@@ -75,7 +75,7 @@ public class PingPongClient_close implements Runnable,ConnectCallback,DeliverCal
 
 	@Override
 	public void deliver(NioChannel channel, ByteBuffer bytes) {
-		System.out.println(prefClient+"Message recu :"+ new String(bytes.array()));
+		//System.out.println(prefClient+"Message recu :"+ new String(bytes.array()));
 		String ping = "Ping"+n;
 		n++;
 		

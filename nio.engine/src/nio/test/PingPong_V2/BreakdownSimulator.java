@@ -26,9 +26,10 @@ public class BreakdownSimulator implements Runnable {
 		while(!Thread.interrupted())
 		{
 			int threadIndex = r.nextInt(threads.size());
-			int timeToSleep = r.nextInt(8)*500+1000;
+			int timeToSleep = r.nextInt(8)*100+500;
 			try {
 				Thread.sleep(timeToSleep);
+				//threads.get(threadIndex).interrupt();
 				threads.get(threadIndex).interrupt();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block

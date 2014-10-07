@@ -25,7 +25,7 @@ public class CNioEngine extends NioEngine {
 
 	public Selector selector;
 	//Hashtable<ServerSocketChannel, AcceptCallback> listening;
-	Hashtable<SocketChannel, ConnectCallback> connecting;
+	//Hashtable<SocketChannel, ConnectCallback> connecting;
 	Hashtable<ServerSocketChannel, CNioServer> nioServers;
 	Hashtable<SocketChannel, CNioChannel> nioChannels;
 
@@ -34,7 +34,7 @@ public class CNioEngine extends NioEngine {
 		
 		selector = Selector.open();
 		//listening = new Hashtable<ServerSocketChannel, AcceptCallback>();
-		connecting = new Hashtable<SocketChannel, ConnectCallback>();
+		//connecting = new Hashtable<SocketChannel, ConnectCallback>();
 		nioServers = new Hashtable<ServerSocketChannel, CNioServer>();
 		nioChannels = new Hashtable<SocketChannel, CNioChannel>();
 
@@ -112,7 +112,11 @@ public class CNioEngine extends NioEngine {
 			sc.configureBlocking(false);
 			sc.register(selector, SelectionKey.OP_CONNECT);
 			sc.connect(new InetSocketAddress(hostAddress, port));
-			connecting.put(sc, callback);
+			
+			CNioChannel nChannel  = new CNioChannel(sc, this,callback);
+			nioChannels.put(sc, nChannel);
+			
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -136,7 +140,7 @@ public class CNioEngine extends NioEngine {
 			socketChannel.register(this.selector, SelectionKey.OP_READ);
 
 			AcceptCallback callback = nioServers.get(serverSocketChannel).getCallback();
-			CNioChannel nChannel = new CNioChannel(socketChannel, this);
+			CNioChannel nChannel = new CNioChannel(socketChannel, this,callback);
 			nioChannels.put(socketChannel, nChannel);
 			
 
@@ -167,9 +171,7 @@ public class CNioEngine extends NioEngine {
 		}
 		key.interestOps(SelectionKey.OP_READ);
 		
-		CNioChannel nChannel  = new CNioChannel(socketChannel, this);
-		nioChannels.put(socketChannel, nChannel);
-		connecting.get(socketChannel).connected(nChannel);
+		nioChannels.get(socketChannel).connected();
 		
 	}
 
@@ -191,8 +193,9 @@ public class CNioEngine extends NioEngine {
 			handleSocketToClose(socketChannel, key);
 			return;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.err.println("IOEXCEPTION");
+			handleSocketToClose(socketChannel, key);
+			return;
 		}
 
 	}
@@ -215,8 +218,9 @@ public class CNioEngine extends NioEngine {
 			handleSocketToClose(socketChannel, key);
 			return;
 		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
+			System.err.println("IOEXCEPTION");
+			handleSocketToClose(socketChannel, key);
+			return;
 		}
 		
 		if(res) 
@@ -238,7 +242,7 @@ public class CNioEngine extends NioEngine {
 	
 	public void handleSocketToClose(SocketChannel socketChannel,SelectionKey key)
 	{
-		System.out.println("----------- On ferme ce socket !----------");
+		//System.out.println("----------- On ferme ce socket !----------");
 		nioChannels.remove(socketChannel).close();
 		key.cancel();
 	}
