@@ -30,17 +30,17 @@ public abstract class NioEngine {
     localhost = InetAddress.getByName("localhost");
   }
 
-  long lastEcho;
-  long startTime;
+  protected long lastEcho;
+  protected long startTime;
 
   long totalAcceptCount;
   long totalConnectCount;
   long totalWriteCount;
   long totalReadCount;
-  long acceptCount;
-  long connectCount;
-  long writeCount;
-  long readCount;
+  protected long acceptCount;
+  protected long connectCount;
+  protected long writeCount;
+  protected long readCount;
   Thread echoThread;
   Runnable echo = new Runnable() {
     public void run() {

@@ -50,13 +50,13 @@ public class PingPongServer_V2 implements Runnable,AcceptCallback,DeliverCallbac
 	
 	@Override
 	public void closed(NioChannel channel) {
-		//System.out.println(prefServer+"AcceptCallback closed");
+		System.out.println(prefServer+"AcceptCallback closed");
 
 	}
 
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {
-		//System.out.println(prefServer+"AcceptCallback accepted");
+		System.out.println(prefServer+"AcceptCallback accepted");
 		channel.setDeliverCallback(this);
 	}
 
