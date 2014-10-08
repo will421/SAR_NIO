@@ -177,167 +177,190 @@ public class CNioChannel extends NioChannel {
 		int res = -1;
 		
 		//Penser à boucler un peu au cas où le buffer NIO contienne plusieurs messages
-		
-		if(currentReadingState == READING_STATE.READING_DONE)//reinit buffers
+		while(true)
 		{
-			buffer_read = null;	
-			buffer_length.position(0); // on se reposition au début pour ecraser et réécrire dessus
-			inBufferMetaData.position(0);
-			currentReadingState = READING_STATE.READING_METADATA;
-		}
-		if(currentReadingState == READING_STATE.READING_METADATA)
-		{
-			res =socketChannel.read(inBufferMetaData);
-			if(res==-1)
-				throw new ClosedChannelException();
-			
-			if(inBufferMetaData.remaining()==0){
-				inBufferMetaData.position(0);
-				inMetadata = inBufferMetaData.getInt();
-				currentReadingState = READING_STATE.READING_LENGTH;
-			}
-		}
-		
-		
-		if (currentReadingState == READING_STATE.READING_LENGTH) { // Lecture de la taille totale du message 
-			res = socketChannel.read(buffer_length);
-			if(res==-1)
-				throw new ClosedChannelException();
-			
-			if(buffer_length.remaining()==0){
-				buffer_length.position(0);
-				int length_msg = buffer_length.getInt();
-				buffer_read = ByteBuffer.allocate(length_msg);
-				currentReadingState = READING_STATE.READING_MSG;
-			}
-		}
 
-		if ( currentReadingState == READING_STATE.READING_MSG ){
-			res = socketChannel.read(buffer_read);
-			if(res==-1)
-				throw new ClosedChannelException();
-				
-			if( buffer_read.remaining() == 0 ) {
-				//lecture complète on envoie
-				//callbacke
-
-				currentReadingState = READING_STATE.READING_CHECKSUM;
-			}
-		}
-		if( currentReadingState == READING_STATE.READING_CHECKSUM)
-		{
-			if( (inMetadata & containChecksum)!=0)
+			if(currentReadingState == READING_STATE.READING_DONE)//reinit buffers
 			{
-				res = socketChannel.read(inBufferChecksum);
+				buffer_read = null;	
+				buffer_length.position(0); // on se reposition au début pour ecraser et réécrire dessus
+				inBufferMetaData.position(0);
+				currentReadingState = READING_STATE.READING_METADATA;
+			}
+			if(currentReadingState == READING_STATE.READING_METADATA)
+			{
+				res =socketChannel.read(inBufferMetaData);
 				if(res==-1)
 					throw new ClosedChannelException();
+				if(res==0)
+					break;
+
+				if(inBufferMetaData.remaining()==0){
+					inBufferMetaData.position(0);
+					inMetadata = inBufferMetaData.getInt();
+					currentReadingState = READING_STATE.READING_LENGTH;
+				}
+			}
+
+
+			if (currentReadingState == READING_STATE.READING_LENGTH) { // Lecture de la taille totale du message 
+				res = socketChannel.read(buffer_length);
+				if(res==-1)
+					throw new ClosedChannelException();
+				if(res==0)
+					break;	
 				
-				if(inBufferChecksum.remaining()==0)
-				{
-					try {
-						byte[] checksum = createChecksum(buffer_read);
-						if(!checkChecksum(inBufferChecksum, checksum))
-						{
-							throw new Exception("Checksum failed");
-						}
-							
-					} catch (NoSuchAlgorithmException e) {
-						e.printStackTrace();
-						System.exit(1);
-					} catch (Exception e) {
-						e.printStackTrace();
-						System.exit(1);
-					}
-					currentReadingState = READING_STATE.READING_DONE;
-				}		
+				if(buffer_length.remaining()==0){
+					buffer_length.position(0);
+					int length_msg = buffer_length.getInt();
+					buffer_read = ByteBuffer.allocate(length_msg);
+					currentReadingState = READING_STATE.READING_MSG;
+				}
 			}
-			else
+
+			if ( currentReadingState == READING_STATE.READING_MSG ){
+				res = socketChannel.read(buffer_read);
+				if(res==-1)
+					throw new ClosedChannelException();
+				if(res==0)
+					break;
+				
+				if( buffer_read.remaining() == 0 ) {
+					//lecture complète on envoie
+					//callbacke
+
+					currentReadingState = READING_STATE.READING_CHECKSUM;
+				}
+			}
+			if( currentReadingState == READING_STATE.READING_CHECKSUM)
 			{
-				currentReadingState = READING_STATE.READING_DONE;
+				if( (inMetadata & containChecksum)!=0)
+				{
+					res = socketChannel.read(inBufferChecksum);
+					if(res==-1)
+						throw new ClosedChannelException();
+					if(res==0)
+						break;
+					
+					if(inBufferChecksum.remaining()==0)
+					{
+						try {
+							byte[] checksum = createChecksum(buffer_read);
+							if(!checkChecksum(inBufferChecksum, checksum))
+							{
+								throw new Exception("Checksum failed");
+							}
+
+						} catch (NoSuchAlgorithmException e) {
+							e.printStackTrace();
+							System.exit(1);
+						} catch (Exception e) {
+							e.printStackTrace();
+							System.exit(1);
+						}
+						currentReadingState = READING_STATE.READING_DONE;
+					}		
+				}
+				else
+				{
+					currentReadingState = READING_STATE.READING_DONE;
+				}
 			}
+
+			if (currentReadingState == READING_STATE.READING_DONE && (inMetadata & isAMessage)!=0 )
+				dCallback.deliver(this, buffer_read.duplicate()); //duplicate car le buffer est ecrasé pour la prochaine reception, l'utilisateur peut perdre son messag
+
 		}
-		
-		if (currentReadingState == READING_STATE.READING_DONE && (inMetadata & isAMessage)!=0 )
-			dCallback.deliver(this, buffer_read.duplicate()); //duplicate car le buffer est ecrasé pour la prochaine reception, l'utilisateur peut perdre son messag
-		
-		
 	}
 
 	public boolean sendAutomatton() throws ClosedChannelException,IOException {
 		//retourne true si il n'y a plus ri1en a envoyer
 		//Penser à continuer l'envoi si il reste de la place dans le bufferNio
-		if(currentSendingState == SENDING_STATE.SENDING_DONE)
-		{
-			currentBufferOut = buffers_out.pop();
-			currentBufferOut.position(0);
-			outBufferLength.position(0);
-			outBufferLength.putInt(currentBufferOut.capacity());
-			outBufferLength.position(0);
-			
-			outBufferMetaData.position(0);
-			outBufferMetaData.putInt(outMetaData);
-			outBufferMetaData.position(0);
-			
-			outBufferChecksum.position(0);
-			
-			currentSendingState = SENDING_STATE.SENDING_METADATA;
-		}
+		int res = 0;
 		
-		if(currentSendingState == SENDING_STATE.SENDING_METADATA)
+		while(buffers_out.size()>0)
 		{
-			
-					socketChannel.write(outBufferMetaData);
 
+			if(currentSendingState == SENDING_STATE.SENDING_DONE)
+			{
+				currentBufferOut = buffers_out.pop();
+				currentBufferOut.position(0);
+				outBufferLength.position(0);
+				outBufferLength.putInt(currentBufferOut.capacity());
+				outBufferLength.position(0);
 
-				
-				
-			if(outBufferMetaData.remaining()==0){
-				currentSendingState = SENDING_STATE.SENDING_LENGTH;
-			}	
-		}
-		
-		if (currentSendingState == SENDING_STATE.SENDING_LENGTH) { // Lecture de la taille totale du message 
+				outBufferMetaData.position(0);
+				outBufferMetaData.putInt(outMetaData);
+				outBufferMetaData.position(0);
 
-				socketChannel.write(outBufferLength);
+				outBufferChecksum.position(0);
 
-			if(outBufferLength.remaining()==0){
-				currentSendingState = SENDING_STATE.SENDING_MSG;
+				currentSendingState = SENDING_STATE.SENDING_METADATA;
 			}
-		}
-		
-		if(currentSendingState == SENDING_STATE.SENDING_MSG)
-		{
 
-				socketChannel.write(currentBufferOut);
+			if(currentSendingState == SENDING_STATE.SENDING_METADATA)
+			{
 
-			
-			if( currentBufferOut.remaining() == 0 ) {
-				currentSendingState = SENDING_STATE.SENDING_CHECKSUM;
+				res = socketChannel.write(outBufferMetaData);
+				if(res==0)
+					break;
+
+
+
+				if(outBufferMetaData.remaining()==0){
+					currentSendingState = SENDING_STATE.SENDING_LENGTH;
+				}	
 			}
-		}
-		
-		if (currentSendingState == SENDING_STATE.SENDING_CHECKSUM) {
-			if ((outMetaData & containChecksum) != 0) {
-				try {
-					byte[] checksum = createChecksum(currentBufferOut);
-					outBufferChecksum.put(checksum);
-					outBufferChecksum.position(0);
-					socketChannel.write(outBufferChecksum);
-				} catch (NoSuchAlgorithmException e) {
-					e.printStackTrace();
-					System.exit(1);
+
+			if (currentSendingState == SENDING_STATE.SENDING_LENGTH) { // Lecture de la taille totale du message 
+
+				res = socketChannel.write(outBufferLength);
+				if(res==0)
+					break;
+				
+				if(outBufferLength.remaining()==0){
+					currentSendingState = SENDING_STATE.SENDING_MSG;
 				}
+			}
 
-				if (outBufferChecksum.remaining() == 0) {
+			if(currentSendingState == SENDING_STATE.SENDING_MSG)
+			{
+
+				res = socketChannel.write(currentBufferOut);
+				if(res==0)
+					break;
+
+				if( currentBufferOut.remaining() == 0 ) {
+					currentSendingState = SENDING_STATE.SENDING_CHECKSUM;
+				}
+			}
+
+			if (currentSendingState == SENDING_STATE.SENDING_CHECKSUM) {
+				if ((outMetaData & containChecksum) != 0) {
+					try {
+						byte[] checksum = createChecksum(currentBufferOut);
+						outBufferChecksum.put(checksum);
+						outBufferChecksum.position(0);
+						res = socketChannel.write(outBufferChecksum);
+						if(res==0)
+							break;
+						
+					} catch (NoSuchAlgorithmException e) {
+						e.printStackTrace();
+						System.exit(1);
+					}
+
+					if (outBufferChecksum.remaining() == 0) {
+						currentSendingState = SENDING_STATE.SENDING_DONE;
+					}
+				} else {
 					currentSendingState = SENDING_STATE.SENDING_DONE;
 				}
-			} else {
-				currentSendingState = SENDING_STATE.SENDING_DONE;
+
 			}
 
 		}
-		
-		
+
 		return buffers_out.size()==0 && currentSendingState==SENDING_STATE.SENDING_DONE;
 	}
 	
@@ -347,7 +370,8 @@ public class CNioChannel extends NioChannel {
 		buffer.position(0);
 		complete.update(buffer);
 		buffer.position(0);
-		return complete.digest();
+		byte[] t = complete.digest();
+		return t;
 	}
 	
 	private static boolean checkChecksum(ByteBuffer buffer,byte[] bytes)
