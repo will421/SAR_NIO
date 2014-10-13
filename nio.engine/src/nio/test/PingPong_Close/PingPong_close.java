@@ -26,7 +26,7 @@ public class PingPong_close{
 		
 		t= new Thread(new PingPongServer_close(4211));
 		t.start();
-		//bds.add(t);
+		bds.add(t);
 
 		
 		try {

@@ -26,6 +26,7 @@ public class PingPongSimple {
 			System.exit(1);
 		}
 
+		//new Thread(new PingPongClient("localhost",4211)).start();
 		new Thread(new PingPongClient("localhost",4211)).start();
 	}
 

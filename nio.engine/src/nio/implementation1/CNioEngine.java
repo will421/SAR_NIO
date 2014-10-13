@@ -35,9 +35,9 @@ public class CNioEngine extends NioEngine {
 
 	@Override
 	public void mainloop() {
-		
+
 		startTime = System.currentTimeMillis();
-		
+
 		while (true) {
 			try {
 				selector.select();
@@ -75,47 +75,40 @@ public class CNioEngine extends NioEngine {
 	}
 
 	@Override
-	public NioServer listen(int port, AcceptCallback callback)
-			/*throws IOException*/ {
+	public NioServer listen(int port, AcceptCallback callback) throws IOException
+	{
 		CNioServer nServer = null;
-		try {
-			ServerSocketChannel ssc = ServerSocketChannel.open();
-			ssc.configureBlocking(false);
-			InetSocketAddress isa = new InetSocketAddress("localhost", port);
-			ssc.socket().bind(isa);
-			ssc.register(selector, SelectionKey.OP_ACCEPT);
-			nServer = new CNioServer(ssc,callback);
-			//listening.put(ssc, callback);
-			nioServers.put(ssc, nServer);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+
+		ServerSocketChannel ssc = ServerSocketChannel.open();
+		ssc.configureBlocking(false);
+		InetSocketAddress isa = new InetSocketAddress("localhost", port);
+		ssc.socket().bind(isa);
+		ssc.register(selector, SelectionKey.OP_ACCEPT);
+		nServer = new CNioServer(ssc,callback);
+		//listening.put(ssc, callback);
+		nioServers.put(ssc, nServer);
+
+
 		return nServer;
 	}
 
 	@Override
 	public void connect(InetAddress hostAddress, int port,
-			ConnectCallback callback)/* throws UnknownHostException,
-			SecurityException, IOException*/ {
-		// TODO Auto-generated method stub
+			ConnectCallback callback) throws UnknownHostException,
+			SecurityException, IOException {
+
 
 		SocketChannel sc;
-		try {
-			sc = SocketChannel.open();
-			sc.configureBlocking(false);
-			sc.register(selector, SelectionKey.OP_CONNECT);
-			sc.connect(new InetSocketAddress(hostAddress, port));
-			
-			CNioChannel nChannel  = new CNioChannel(sc, this,callback);
-			nioChannels.put(sc, nChannel);
-			
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+
+		sc = SocketChannel.open();
+		sc.configureBlocking(false);
+		sc.register(selector, SelectionKey.OP_CONNECT);
+		sc.connect(new InetSocketAddress(hostAddress, port));
+
+		CNioChannel nChannel  = new CNioChannel(sc, this,callback);
+		nioChannels.put(sc, nChannel);
+
+
 
 	}
 
@@ -126,8 +119,10 @@ public class CNioEngine extends NioEngine {
 	 *            key of the channel on which a connection is requested
 	 */
 	private void handleAccept(SelectionKey key) {
-		acceptCount ++;
+		//todo : IOException
 		
+		acceptCount ++;
+
 		SocketChannel socketChannel = null;
 		ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key
 				.channel();
@@ -139,7 +134,7 @@ public class CNioEngine extends NioEngine {
 			AcceptCallback callback = nioServers.get(serverSocketChannel).getCallback();
 			CNioChannel nChannel = new CNioChannel(socketChannel, this,callback);
 			nioChannels.put(socketChannel, nChannel);
-			
+
 
 			callback.accepted(nioServers.get(serverSocketChannel), nChannel);
 		} catch (IOException e) {
@@ -155,9 +150,11 @@ public class CNioEngine extends NioEngine {
 	 *            key of the channel on which a connection is requested
 	 */
 	private void handleConnection(SelectionKey key) {
+		//todo IOEXCEPTION
+		
 		connectCount++;
-		
-		
+
+
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 
 		try {
@@ -169,9 +166,9 @@ public class CNioEngine extends NioEngine {
 			return;
 		}
 		key.interestOps(SelectionKey.OP_READ);
-		
+
 		nioChannels.get(socketChannel).connected();
-		
+
 	}
 
 	/**
@@ -184,8 +181,8 @@ public class CNioEngine extends NioEngine {
 	 */
 	private void handleRead(SelectionKey key) {
 		readCount++;
-		
-		
+
+
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 
 		try {
@@ -223,28 +220,29 @@ public class CNioEngine extends NioEngine {
 			handleSocketToClose(socketChannel, key);
 			return;
 		}
-		
+
 		if(res) 
 			// Pour retirer l'interet en ecriture, uniquement dans le cas où plus rien à ecrire
 			// Dependera de la valeur de retour de automate
 			key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
 	}
 
-	
+
 	public void wantToWrite(CNioChannel nChannel)
 	{
 		try {
 			nChannel.getChannel().register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ);
 		} catch (ClosedChannelException e) {
-			e.printStackTrace();
-			System.exit(1);
+			handleSocketToClose(nChannel.getChannel(), null);
+			return;
 		}
 	}
-	
+
 	public void handleSocketToClose(SocketChannel socketChannel,SelectionKey key)
 	{
 		//System.out.println("----------- On ferme ce socket !----------");
 		nioChannels.remove(socketChannel).close();
+		if(key!=null)
 		key.cancel();
 	}
 
