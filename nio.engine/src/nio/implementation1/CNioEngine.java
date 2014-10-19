@@ -27,7 +27,7 @@ public class CNioEngine extends NioEngine {
 	Hashtable<ServerSocketChannel, CNioServer> nioServers;
 	Hashtable<SocketChannel, CNioChannel> nioChannels;
 
-	public CNioEngine() throws Exception {
+	public CNioEngine() throws Exception{
 		selector = Selector.open();
 		nioServers = new Hashtable<ServerSocketChannel, CNioServer>();
 		nioChannels = new Hashtable<SocketChannel, CNioChannel>();
