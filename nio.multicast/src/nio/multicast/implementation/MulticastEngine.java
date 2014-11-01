@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import nio.engine.AcceptCallback;
 import nio.engine.ConnectCallback;
@@ -19,24 +20,22 @@ import nio.engine.NioEngine;
 import nio.engine.NioServer;
 import nio.implementation1.CNioEngine;
 import nio.implementation1.CNioServer;
-import nio.multicast.IJoinedCallback;
+import nio.multicast.IMulticastCallback;
 import nio.multicast.IMulticastEngine;
-import nio.multicast.IMulticastGroup;
-import nio.multicast.IMulticastServer;
 
 public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectCallback,DeliverCallback {
 
 	enum ENGINE_STATE{
 		CONNECT_TO_SERVER,
-		CONNECT_TO_MEMBER
+		CONNECT_TO_MEMBER,
+		WORKING
 	}
 	
 	
 	private HashMap<Integer,NioChannel> members;
 	private NioEngine nEngine;
-	private IJoinedCallback joinCallback;
+	private IMulticastCallback callback;
 	private NioChannel channelServer;
-	private IMulticastServer multicastServer;
 	private NioServer connectChannel;
 	//private MulticastGroup group;
 	private int n ;
@@ -50,8 +49,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	public MulticastEngine(int n) throws Exception {
 		nEngine = new CNioEngine();
 		channelServer = null;
-		multicastServer = null;
-		joinCallback = null;
+		callback = null;
 		this.n = n;
 		state = ENGINE_STATE.CONNECT_TO_SERVER;
 		members = new HashMap<Integer,NioChannel>();
@@ -60,7 +58,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	
 	
 	@Override
-	public IMulticastServer join(String adr, int port, IJoinedCallback callback) {
+	public void join(String adr, int port, IMulticastCallback callback) {
 		
 		try {
 			nEngine.connect(InetAddress.getByName(adr), port, this);
@@ -68,10 +66,8 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		joinCallback = null;
-		MulticastServer ms = new MulticastServer(adr,port);
-		multicastServer = ms;
-		return ms;
+		this.callback = callback;
+
 	}
 
 
@@ -109,8 +105,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			
 			if(members.size()==adrGroup.length)
 			{
-				IMulticastGroup group = new MulticastGroup(nEngine);
-				joinCallback.joined(multicastServer, group);
+				callback.joined(this);
 			}
 		}
 		
@@ -160,8 +155,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		
 		if(members.size()==adrGroup.length)
 		{
-			IMulticastGroup group = new MulticastGroup(nEngine);
-			joinCallback.joined(multicastServer, group);
+			callback.joined(this);
 		}
 		
 	}
@@ -207,5 +201,38 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		
 		return res;
 	}
+
+
+
+	@Override
+	public void send(ByteBuffer buf) {
+
+		for(Entry<Integer,NioChannel> entry : members.entrySet()) {
+		    Integer key = entry.getKey();
+		    NioChannel value = entry.getValue();
+		    
+		    value.send(buf);
+		}
+		
+	}
+
+	@Override
+	public void send(byte[] bytes, int offset, int length) {
+		byte[] cpy = bytes.clone();
+		for(Entry<Integer,NioChannel> entry : members.entrySet()) {
+		    Integer key = entry.getKey();
+		    NioChannel value = entry.getValue();
+		    
+		    value.send(cpy, offset, length);
+		}
+		
+	}
+
+	@Override
+	public void leave() {
+		// TODO Auto-generated method stub
+		
+	}
+
 	
 }

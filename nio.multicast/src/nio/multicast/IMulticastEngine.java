@@ -1,5 +1,7 @@
 package nio.multicast;
 
+import java.nio.ByteBuffer;
+
 public interface IMulticastEngine {
 	
 	
@@ -10,16 +12,37 @@ public interface IMulticastEngine {
 	 * @param callback
 	 * @return
 	 */
-	public IMulticastServer join(String adr, int port,IJoinedCallback callback);
-	
+	public void join(String adr, int port,IMulticastCallback callback);
+
+
+	/**
+	 * NIO engine mainloop Wait for selected events on registered channels
+	 * Selected events for a given channel may be ACCEPT, CONNECT, READ, WRITE
+	 * Selected events for a given channel may change over time
+	 */
+
+	public abstract void mainloop();
+
 	
 	  /**
-	   * NIO engine mainloop Wait for selected events on registered channels
-	   * Selected events for a given channel may be ACCEPT, CONNECT, READ, WRITE
-	   * Selected events for a given channel may change over time
+	   * Send the given byte buffer. No copy is made, so the buffer 
+	   * should no longer be used by the code sending it.
+	   * @param buf
 	   */
+	  public abstract void send(ByteBuffer buf);
 
-	  public abstract void mainloop();
-
+	  /**
+	   * Sending the given byte array, a copy is made into internal buffers,
+	   * so the array can be reused after sending it.
+	   * @param bytes
+	   * @param offset
+	   * @param length
+	   */
+	  public abstract void send(byte[] bytes, int offset, int length);
+	  
+	  /**
+	   * Ask for leaving the group and do not receive message from it
+	   */
+	  public void leave();
 	
 }

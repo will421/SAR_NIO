@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 import nio.engine.NioChannel;
 
-public interface IMulticastDeliverCallback {
+public interface IMulticastCallback {
 
 
 	  /**
@@ -13,7 +13,10 @@ public interface IMulticastDeliverCallback {
 	   * @param group
 	   * @param bytes
 	   */
-	  public void deliver(IMulticastGroup group, ByteBuffer bytes);
+	  public void deliver(IMulticastEngine engine, ByteBuffer bytes);
 	
-	
+	  /**
+	   * Callback to notify that the engine is ready
+	   */ 
+	  public void joined(IMulticastEngine engine);
 }
