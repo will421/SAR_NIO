@@ -48,7 +48,7 @@ public class CNioChannel extends NioChannel {
 	private CNioEngine nEngine;
 
 
-	// Declaration of Automaton state for the read-auomaton
+	// Declaration of Automaton state for the read-automaton
 	enum READING_STATE {
 		READING_DONE,
 		READING_METADATA,
