@@ -1,5 +1,6 @@
 package chat.gui.test;
 
+
 import java.util.Random;
 
 import chat.gui.ChatException;
