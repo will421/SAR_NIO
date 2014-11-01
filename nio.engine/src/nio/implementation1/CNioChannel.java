@@ -135,10 +135,11 @@ public class CNioChannel extends NioChannel {
 	public void send(byte[] bytes, int offset, int length) {
 
 		ByteBuffer buffer = ByteBuffer.allocate(length);
+		byte[] copy = bytes.clone();
 		
 		for(int i =offset;i<offset+length;i++)
 		{
-			buffer.put(bytes[i]);
+			buffer.put(copy[i]);
 		}
 
 		send(buffer);

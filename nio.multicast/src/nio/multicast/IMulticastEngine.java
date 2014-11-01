@@ -12,4 +12,14 @@ public interface IMulticastEngine {
 	 */
 	public IMulticastServer join(String adr, int port,IJoinedCallback callback);
 	
+	
+	  /**
+	   * NIO engine mainloop Wait for selected events on registered channels
+	   * Selected events for a given channel may be ACCEPT, CONNECT, READ, WRITE
+	   * Selected events for a given channel may change over time
+	   */
+
+	  public abstract void mainloop();
+
+	
 }

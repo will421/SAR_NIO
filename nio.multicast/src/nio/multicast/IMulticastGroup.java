@@ -12,7 +12,7 @@ public interface IMulticastGroup {
 	   * Set the callback to deliver messages to.
 	   * @param callback
 	   */
-	  public abstract void setDeliverCallback(IMulticastDeliverCallback callback);
+	  public abstract void setMulticastDeliverCallback(IMulticastDeliverCallback callback);
 	
 	
 	  /**
