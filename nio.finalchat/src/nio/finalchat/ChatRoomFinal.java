@@ -6,15 +6,14 @@ import nio.multicast.IMulticastEngine;
 import chat.gui.ChatException;
 import chat.gui.ChatGUI;
 import chat.gui.IChatRoom;
-import chat.gui.test.ChatRoomMock;
 
 
 public class ChatRoomFinal implements IChatRoom, Runnable {
 
 	EventPump m_pump;
-	private String _adr;
-	private int _port;
-	private String _topic;
+	String _adr;
+	int _port;
+	String _topic;
 	
 	IMulticastEngine engine;
 	
