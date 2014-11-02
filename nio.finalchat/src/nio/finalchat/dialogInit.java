@@ -91,7 +91,7 @@ public class dialogInit extends JFrame implements ActionListener {
 
 				name = "Client" + (i+1) ;	
 
-				Thread t = new Thread(room = new ChatRoomFinal("Topic",_adrServer,_portServer));
+				Thread t = new Thread(room = new ChatRoomFinal(name,_adrServer,_portServer));
 				t.start();
 
 			}

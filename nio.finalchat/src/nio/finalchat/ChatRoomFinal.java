@@ -11,20 +11,28 @@ import chat.gui.IChatRoom;
 public class ChatRoomFinal implements IChatRoom, Runnable {
 
 	EventPump m_pump;
+	
+	String _clientName;
+	int _idClient; //pour le PID
+	
 	String _adr;
 	int _port;
-	String _topic;
+	
 	
 	IMulticastEngine engine;
 	
 	
-	ChatRoomFinal(String topic,String adr, int port) {
+	ChatRoomFinal(String clientName,String adr, int port) {
 		
 		this.m_pump = new EventPump(this);
 		this.m_pump.start();
-		this._topic=topic;
+		this._idClient = Integer.parseInt(clientName.replaceAll("[^\\d.]", ""));
+		this. _clientName= clientName;
 		this._adr=adr;
 		this._port=port;
+	
+		
+
 	}
 
 	@Override
@@ -52,9 +60,10 @@ public class ChatRoomFinal implements IChatRoom, Runnable {
 		
 	    ChatRoomFinal room = this;
 	    
-	    new ChatGUI("Salle de Chat", room);
+	    new ChatGUI("Salle de Chat view : " + _clientName, room);
 	  
 	}
+	
 	
 
 
