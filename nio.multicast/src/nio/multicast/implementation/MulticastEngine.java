@@ -51,6 +51,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		members = null;
 		myClock = 0;
 		unknowChannels = new LinkedList<NioChannel>();
+		queue = new LinkedList<MulticastQueueElement>();
 	}
 	
 	
@@ -177,6 +178,9 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			{
 				callback.joined(this,this.mPid);
 				state = ENGINE_STATE.WORKING;
+				//TODO temp
+				//String s = "ahaha from "+"{"+mPid+"}";
+				//this.send(s.getBytes(), 0, s.getBytes().length);
 			}
 			
 		}
@@ -253,8 +257,11 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		Collections.sort(queue);
 	
 		myClock = Math.max(myClock,el.getClock());
-		sendACK(bytes);
-		callback.deliver(this, bytes); //TODO A retirer
+		
+		//TODO REMOVE
+		//sendACK(bytes);
+		handleDeliver();
+		//callback.deliver(this, bytes); //TODO A retirer
 	}
 	
 	private void handleReceiveACK(ByteBuffer bytes)
@@ -293,16 +300,13 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		//TODO handleDeliver
 		if(true)
 		{
-			ByteBuffer buf = first.getMessage();
-			MESSAGE_TYPE type = MESSAGE_TYPE.values()[buf.getInt()];
-			if(type == MESSAGE_TYPE.MESSAGE)
+			if(first.getType()== MESSAGE_TYPE.MESSAGE)
 			{
-				long clock = buf.getLong();
-				int pid = buf.getInt();
-				ByteBuffer message = buf.slice();
-				callback.deliver(this, message);
+				callback.deliver(this, first.getMessage());
+				//String s = new String(first.getMessage().array());
+				//System.out.println("{"+mPid+"}"+"receive : "+s);
 			}
-			else if (type == MESSAGE_TYPE.ADD_MEMBER)
+			else if (first.getType() == MESSAGE_TYPE.ADD_MEMBER)
 			{
 				//add member
 			}
@@ -382,7 +386,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		{
 			handleReceiveServer(bytes);
 		}
-		else if(members.contains(channel))
+		else if(members.contains(channel) || members.channelInLocal == channel)
 		{
 			handleReceiveMember(bytes);
 		} else if(unknowChannels.contains(channel))
@@ -391,9 +395,20 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			if(type == MESSAGE_TYPE.ID)
 			{
 				int id = bytes.getInt();
-				members.connected(id, channel);
+				if(id == mPid)
+				{
+					if(members.channelInLocal==null)
+						members.channelInLocal = channel;
+					else
+						members.connected(mPid, channel);
+				}
+				else
+				{
+					members.connected(id, channel);
+				}
 				isJoined();
 			}
+			unknowChannels.remove(channel);
 		}
 	}
 

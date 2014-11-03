@@ -13,13 +13,14 @@ public class ListMember{
 	private String adrs[];
 	private int ports[];
 	public NioChannel channels[]; //remettre priver
-
+	public NioChannel channelInLocal;
 
 	public ListMember(int length) {
 		this.length = length;
 		adrs= new String[length];
 		ports = new int[length];
 		channels = new NioChannel[length];
+		channelInLocal = null;
 		valid = new boolean[length];
 
 		for(int i=0;i<length;i++)
@@ -97,7 +98,7 @@ public class ListMember{
 				break;
 			}
 		}
-		return b;
+		return channelInLocal==null?false:b;
 	}
 
 	public boolean contains(NioChannel channel)

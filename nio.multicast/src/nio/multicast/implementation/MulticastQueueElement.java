@@ -24,7 +24,9 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 		type = MESSAGE_TYPE.values()[bytes.getInt()];
 		clock = bytes.getLong();
 		pid = bytes.getInt();
-		message = bytes.slice();
+		ByteBuffer tmp = bytes.slice();
+		message = ByteBuffer.allocate(tmp.remaining());
+		message.put(tmp);
 		acks = new byte[groupSize];
 	}
 	
@@ -91,4 +93,8 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 		return message;
 	}
 	 
+	public MESSAGE_TYPE getType()
+	{
+		return type;
+	}
 }
