@@ -35,8 +35,7 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		this._adr=adr;
 		this._port=port;
 		this._idClient =-1;
-		this.engine = new MulticastEngine(); 
-		//this.engine = new MulticastEngine(this._idClient); 
+		this.engine = new MulticastEngine();  
 
 	}
 
@@ -85,27 +84,24 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	public void run() {
 
 		ChatRoomFinal room = this;
-
-		new ChatGUI("client" +_idClient, room);
+		
+		String name = "" + _idClient;
+		new ChatGUI(name, room);
 
 	}
 
 	@Override
 	public void deliver(IMulticastEngine engine, ByteBuffer bytes) {
-		System.out.println("[CHATROOM"  + this._idClient+"] On est dans le deliver");
+		
+//		engine.send( bytes.ge), 0 , bytes.limit() );
 
 	}
 
 
 	@Override
 	public void joined(IMulticastEngine engine, int pid) {
-
 		this._idClient=pid;
-
-		System.out.println("[CHATROOM" +pid+"]");
-
-
-
+		engine.join(_adr,_port, this);
 	}
 
 
