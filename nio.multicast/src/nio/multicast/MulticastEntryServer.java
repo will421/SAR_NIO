@@ -28,7 +28,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 	private int _nbMember;
 	private int _nbMemberLeft;
 	private NioChannel members[];
-	private Integer ports[];
+	private int ports[];
 	private String adrs[];
 	private int indice;
 	private NioEngine engine;
@@ -42,7 +42,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 		_nbMemberLeft = nbMember;
 		engine = new CNioEngine();
 		members = new NioChannel[nbMember];
-		ports = new Integer[nbMember];
+		ports = new int[nbMember];
 		adrs = new String[nbMember];
 		hmPorts = new HashMap<NioChannel,Integer>();
 		indice = 0;
@@ -97,10 +97,9 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 	@Override
 	public void deliver(NioChannel channel, ByteBuffer bytes) {
 		// TODO Auto-generated method stub
-		
-		
 		bytes.position(0);
 		MESSAGE_SERVER_TYPE type = MESSAGE_SERVER_TYPE.values()[bytes.getInt()];
+		System.out.println("[Server]Type:"+type.toString()+" delivered");
 		if(type == MESSAGE_SERVER_TYPE.READY)
 		{
 			_nbMemberLeft--;
@@ -124,26 +123,21 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 				ByteBuffer buffer = ByteBuffer.allocate(4+4+4+byteArray.length);
 				for(int id=0;id<_nbMember;id++)
 				{
+					buffer = ByteBuffer.allocate(4+4+4+byteArray.length);
 					buffer.position(0);
 					buffer.putInt(MESSAGE_SERVER_TYPE.LIST.ordinal());
 					buffer.putInt(id); //Le pid du membre
 					buffer.putInt(byteArray.length);
 					buffer.put(byteArray);
-					if(members[id]==null)
-					{
-						System.out.println();
-					}
 					members[id].send(buffer);
 				}
+				System.out.println("[Server]List sended");
 			}
 		}
 		else if(type==MESSAGE_SERVER_TYPE.NEW_PORT)
 		{
 			this.sendPort(channel);
 		}
-		
-		
-		_nbMemberLeft--;
 
 	}
 

@@ -43,7 +43,8 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		MESSAGE,
 		ACK,
 		ADD_MEMBER,
-		NOT_RECEIVED_YET
+		NOT_RECEIVED_YET,
+		ID
 	}
 	
 	
@@ -52,11 +53,11 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	private NioChannel channelServer; //Channel de communication avec le serveur de groupe
 	private NioServer connectChannel;  //Port de connection à ce membre
 	private int mPid ; //Numero du membre dans la liste
-	private int lastConnected; //Dernier membre auquel on s'est connecté (initialisation)
 	private ENGINE_STATE state; //Etat de l'engine
 	private long myClock;
 	private int groupSize;
 	private List<MulticastQueueElement> queue;
+	private List<NioChannel> unknowChannels;
 	
 	private ListMember members;
 	//private HashMap<Integer,NioChannel> members; //Membres du groupes
@@ -73,6 +74,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		//members = new HashMap<Integer,NioChannel>();
 		members = null;
 		myClock = 0;
+		unknowChannels = new LinkedList<NioChannel>();
 	}
 	
 	
@@ -95,9 +97,6 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		nEngine.mainloop();
 	}
 
-
-
-
 	@Override
 	public List<Integer> getPIDS() {
 		return members.getPIDS();
@@ -113,34 +112,18 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		{
 			members.addMember(i, ips[i], ports[i]);
 		}
-		
-		
-		/*
-		for(int i=n;i<Option.ips.length;i++)
+			
+		for(int i=mPid;i<groupSize;i++)
 		{
 			try {
-				nEngine.connect(InetAddress.getByName(Option.ips[i]), Option.ports[i],this);
+				nEngine.connect(InetAddress.getByName(members.getAdr(i)), members.getPort(i),this);
+				System.out.println("{"+mPid+"} connect to {"+i+"}");
 			} catch (SecurityException | IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}*/
-		/*
-		try {
-			connectChannel =  nEngine.listen(ports[n], this);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
-		*/
-		
-		lastConnected = mPid;
-		try {
-			nEngine.connect(InetAddress.getByName(members.getAdr(lastConnected)),members.getPort(lastConnected),this);
-		} catch (SecurityException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
 		state=ENGINE_STATE.CONNECT_TO_MEMBER;
 	}
 
@@ -228,6 +211,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		// TODO Auto-generated method stub
 		bytes.position(0);
 		MESSAGE_SERVER_TYPE type = MESSAGE_SERVER_TYPE.values()[bytes.getInt()];
+		System.out.println(String.valueOf("{"+mPid+"}"+": Receive from server:"+type.toString()));
 		if(type==MESSAGE_SERVER_TYPE.PORT)
 		{
 			int port = bytes.getInt();
@@ -240,6 +224,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			
 			ByteBuffer buf = ByteBuffer.allocate(4);
 			buf.putInt(MESSAGE_SERVER_TYPE.READY.ordinal());
+			int i =MESSAGE_SERVER_TYPE.READY.ordinal(); 
 			this.channelServer.send(buf);
 		}
 		else if(type == MESSAGE_SERVER_TYPE.LIST)
@@ -307,7 +292,6 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		 * 3) pid message
 		 * 4) pid envoyeur
 		 */
-		//TODO RECEPTION ACK
 		bytes.position(0);
 		int type = bytes.getInt();
 		long clock = bytes.getLong();
@@ -360,38 +344,29 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	//callbacks from NioEngine
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {
-		if(connectChannel == server) //Si l'on cherche a se connecter à mon port de connexion dedié au groupe
+		if(state == ENGINE_STATE.CONNECT_TO_MEMBER)
 		{
-			int id = getId(channel.getRemoteAddress());
-			if(id == -1) //Ca signifie que c'est un nouveau membre
-				return;
-			members.connected(id, channel);
-			channel.setDeliverCallback(this);
-			isJoined();
+			if(connectChannel == server) //Si l'on cherche a se connecter à mon port de connexion dedié au groupe
+			{
+				unknowChannels.add(channel);
+				channel.setDeliverCallback(this);
+				ByteBuffer buf = ByteBuffer.allocate(4+4);
+				buf.putInt(MESSAGE_TYPE.ID.ordinal());
+				buf.putInt(mPid);
+				channel.send(buf);
+				/*
+				members.connected(id, channel);
+				channel.setDeliverCallback(this);
+				isJoined();*/
+			}
+		}
+		else
+		{
+			// new Member ?
 		}
 	}
 
-
-
-	@Override
-	public void deliver(NioChannel channel, ByteBuffer bytes) {
-		if(channel==channelServer)
-		{
-			handleReceiveServer(bytes);
-		}
-			
-		else if(members.contains(channel))
-		{
-			handleReceiveMember(bytes);
-		}
-	}
-
-
-	@Override
-	public void closed(NioChannel channel) {
-		//Retirer le membre de la liste interne
-	}
-
+	
 	@Override
 	public void connected(NioChannel channel) {
 		
@@ -400,31 +375,46 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			//On considere que le channel represente le serveurs
 			channelServer = channel;
 			channel.setDeliverCallback(this);
-			//On conidere recevoir la liste
-			//this.deliver(channel, null); //TODO ?
+
 		} else if (state == ENGINE_STATE.CONNECT_TO_MEMBER)
 		{
-			members.connected(lastConnected, channel);
-			if(lastConnected+1<groupSize)
-			{
-				lastConnected++;
-				try {
-					nEngine.connect(InetAddress.getByName(members.getAdr(lastConnected)), members.getPort(lastConnected),this);
-				}
-
-
-				catch (SecurityException | IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-
-				}
-			}
-			
-			
+			unknowChannels.add(channel);
+			channel.setDeliverCallback(this);
+			ByteBuffer buf = ByteBuffer.allocate(4+4);
+			buf.putInt(MESSAGE_TYPE.ID.ordinal());
+			buf.putInt(mPid);
+			channel.send(buf);
 		}
-		isJoined();
-		
 	}
+
+	@Override
+	public void deliver(NioChannel channel, ByteBuffer bytes) {
+		if(channel==channelServer)
+		{
+			handleReceiveServer(bytes);
+		}
+		else if(members.contains(channel))
+		{
+			handleReceiveMember(bytes);
+		} else if(unknowChannels.contains(channel))
+		{
+			MESSAGE_TYPE type = MESSAGE_TYPE.values()[bytes.getInt()];
+			if(type == MESSAGE_TYPE.ID)
+			{
+				int id = bytes.getInt();
+				members.connected(id, channel);
+				isJoined();
+			}
+		}
+	}
+
+
+	@Override
+	public void closed(NioChannel channel) {
+		//Retirer le membre de la liste interne
+		members.disconnected(channel);
+	}
+
 
 	
 }

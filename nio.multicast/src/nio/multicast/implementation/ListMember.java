@@ -32,6 +32,20 @@ public class ListMember{
 
 	}
 
+	public int getPid(NioChannel channel)
+	{
+		int res=-1;
+		for(int i=0;i<length;i++)
+		{
+			if(channels[i]==channel)
+			{
+				res = i;
+				break;
+			}
+		}
+		return res;
+	}
+	
 	public boolean isConnected(int pid)
 	{
 		return channels[pid]!=null;
@@ -42,8 +56,9 @@ public class ListMember{
 		channels[pid] = channel;
 	}
 
-	public void disconnected(int pid)
+	public void disconnected(NioChannel channel)
 	{
+		int pid = getPid(channel);
 		channels[pid] = null;
 		valid[pid] = false;
 		adrs[pid] = null;
