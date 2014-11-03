@@ -2,6 +2,7 @@ package nio.implementation1;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
@@ -119,8 +120,12 @@ public class CNioChannel extends NioChannel {
 
 	@Override
 	public InetSocketAddress getRemoteAddress() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		InetSocketAddress adr_t;
+	
+		adr_t = new InetSocketAddress(this.socketChannel.socket().getInetAddress(),this.socketChannel.socket().getPort());
+
+		return adr_t;
 	}
 
 	@Override

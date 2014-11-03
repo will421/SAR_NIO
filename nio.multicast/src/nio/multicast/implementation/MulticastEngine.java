@@ -1,6 +1,7 @@
 package nio.multicast.implementation;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -270,9 +271,13 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		List<Integer> l = new LinkedList<>();
 		int res = -1;
 		
+		String adr2 = adr.getHostString();
+		if (adr2.equals("127.0.0.1"))
+			adr2 = "localhost";
+		
 		for(int i =0;i<groupSize;i++)
 		{
-			if(adr.getHostString().equals(members.getAdr(i)))
+			if(adr2.equals(members.getAdr(i)))
 			{
 				l.add(i);
 			}
@@ -298,8 +303,9 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			if(members.full())
 			{
 				callback.joined(this);
+				state = ENGINE_STATE.WORKING;
 			}
-			state = ENGINE_STATE.WORKING;
+			
 		}
 
 	}
@@ -325,7 +331,8 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		MulticastQueueElement el = new MulticastQueueElement(bytes, groupSize);
 		queue.add(el);
 		Collections.sort(queue);
-		myClock = Long.max(myClock,el.getClock());
+	
+		myClock = Math.max(myClock,el.getClock());
 		sendACK(bytes);
 		callback.deliver(this, bytes); //TODO A retirer
 	}
@@ -440,14 +447,19 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 				lastConnected++;
 				try {
 					nEngine.connect(InetAddress.getByName(members.getAdr(lastConnected)), members.getPort(lastConnected),this);
-				} catch (SecurityException | IOException e) {
+				}
+
+
+				catch (SecurityException | IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+
 				}
 			}
 			
-			isJoined();
+			
 		}
+		isJoined();
 		
 	}
 	

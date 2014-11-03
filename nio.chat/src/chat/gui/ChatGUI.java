@@ -157,7 +157,7 @@ public class ChatGUI implements Runnable{
 
 		leaveButton = new Button("leave");
 		leaveButton.addActionListener(new LeaveListener(this));
-		leaveButton.setEnabled(true);
+		leaveButton.setEnabled(false);
 		buttons.add(leaveButton);
 
 		Button quit_button = new Button("quit");
@@ -175,7 +175,7 @@ public class ChatGUI implements Runnable{
 	}
 
 	void updateGroup() {
-		System.out.println("Updating group...");
+		System.out.println("[GUI]Updating group...");
 		int rows = deliveredMessages.getColumns();
 		if (rows < group.size())
 			rows = group.size();
@@ -201,13 +201,13 @@ public class ChatGUI implements Runnable{
 
 		@Override
 		public void windowOpened(WindowEvent e) {
-			try {
-				room.enter(clientName, listener);
-				leaveButton.setEnabled(true);
-			} catch (Exception ex) {
-				ex.printStackTrace(System.err);
-				System.exit(-1);
-			}
+//			try {
+//				room.enter(clientName, listener);
+//				leaveButton.setEnabled(true);
+//			} catch (Exception ex) {
+//				ex.printStackTrace(System.err);
+//				System.exit(-1);
+//			}
 		}
 
 		@Override
@@ -218,7 +218,7 @@ public class ChatGUI implements Runnable{
 
 		@Override
 		public void windowClosed(WindowEvent e) {
-			System.exit(-1); // Die, do not linger around still receiving messages...
+			//System.exit(-1); // Die, do not linger around still receiving messages...
 		}
 
 		@Override
@@ -248,10 +248,11 @@ public class ChatGUI implements Runnable{
 		public JoinListener(ChatGUI i) {
 			gui = i;
 		}
-
+		
 		public void actionPerformed(ActionEvent e) {
 			try {
 				room.enter(clientName, listener);
+				System.out.println(clientName);
 				enterButton.setEnabled(false);
 				leaveButton.setEnabled(true);
 			} catch (Exception ex) {
@@ -294,7 +295,9 @@ public class ChatGUI implements Runnable{
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			System.out.println("Je quitte " + clientName);
+			System.out.println("[GUI]Je quitte " + clientName);
+			//TODO Penser à couper l'engine
+			
 			frame.setVisible(false);
 		}
 	}

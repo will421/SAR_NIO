@@ -49,6 +49,8 @@ public class MulticastEntryServer implements Runnable,AcceptCallback {
 
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {
+		System.out.println("[Server]On accepte");
+		
 		_nbMemberLeft--;
 		members.add(channel);
 		if(_nbMemberLeft==0)

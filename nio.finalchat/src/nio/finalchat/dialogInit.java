@@ -70,14 +70,19 @@ public class dialogInit extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent evt) {
 
+		MulticastEntryServer entryServ;
+		
 		if (evt.getSource()==launch){
 
 			ChatRoomFinal room;
 			String name;
-			MulticastEntryServer entryServ;
 
 			try {
 				entryServ = new MulticastEntryServer("localhost", 8888, 3);
+				
+				Thread t = new Thread(entryServ);
+				t.start();
+				
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -87,11 +92,20 @@ public class dialogInit extends JFrame implements ActionListener {
 			Object o =listNbClients.getSelectedItem();
 			nbrofClients = Integer.parseInt(o.toString());
 			
+
+			
+			
 			for(int i =0; i < nbrofClients ;i++){
 
-				name = "Client" + (i+1) ;	
+				name = "Client" + (i) ;	
 
-				Thread t = new Thread(room = new ChatRoomFinal(name,_adrServer,_portServer));
+				Thread t = null;
+				try {
+					t = new Thread(room = new ChatRoomFinal(name,_adrServer,_portServer));
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				t.start();
 
 			}
