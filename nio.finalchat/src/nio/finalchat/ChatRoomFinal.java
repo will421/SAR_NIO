@@ -45,7 +45,6 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		final ChatRoomFinal cpChatRoom = this;
 
 
-		System.out.println("[ChatROOM " + this._idClient + " : Je suis dans le enter");
 		m_pump.enqueue(new Runnable() {
 
 			public void run() {
@@ -59,8 +58,7 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	@Override
 	public void leave() throws ChatException {
-		System.out.println("[CHATROOM"  + this._idClient+"] On est dans le leave()");
-
+	
 	}
 
 	@Override
@@ -77,34 +75,40 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		});
 	}
 
-
-
-
 	@Override
 	public void run() {
 
 		ChatRoomFinal room = this;
 		
 		String name = "" + _idClient;
-		new ChatGUI(name, room);
+		new ChatGUI(name, room,false);
 
 	}
 
 	@Override
 	public void deliver(IMulticastEngine engine, ByteBuffer bytes) {
 		
-//		engine.send( bytes.ge), 0 , bytes.limit() );
+    //	engine.send( bytes.ge), 0 , bytes.limit() );
 
 	}
 
 
 	@Override
 	public void joined(IMulticastEngine engine, int pid) {
-		this._idClient=pid;
-		engine.join(_adr,_port, this);
+		_idClient=pid;
 	}
 
-
+   public static void main(String args[]){
+	   
+	   try {
+		new ChatRoomFinal(args[0], Integer.parseInt(args[1])).run();
+	} catch (Exception e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	   
+	   
+   }
 
 
 }

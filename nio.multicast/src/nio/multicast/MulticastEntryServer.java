@@ -14,6 +14,7 @@ import nio.engine.DeliverCallback;
 import nio.engine.NioChannel;
 import nio.engine.NioEngine;
 import nio.engine.NioServer;
+
 import nio.implementation1.CNioEngine;
 import nio.multicast.implementation.MESSAGE_SERVER_TYPE;
 import nio.multicast.implementation.Option;
@@ -22,7 +23,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 
 	private final int initialPort = 50000;
 	private int lastPort = initialPort;
-	
+
 	private String _adr;
 	private int _port;
 	private int _nbMember;
@@ -33,8 +34,8 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 	private int indice;
 	private NioEngine engine;
 	private HashMap<NioChannel,Integer> hmPorts;
-	
-	
+
+
 	public MulticastEntryServer(String adr,int port, int nbMember) throws Exception {
 		_adr = adr;
 		_port = port;
@@ -47,8 +48,8 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 		hmPorts = new HashMap<NioChannel,Integer>();
 		indice = 0;
 	}
-	
-	
+
+
 	@Override
 	public void run() {
 		try {
@@ -67,7 +68,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 	public void accepted(NioServer server, NioChannel channel) {
 		System.out.println("[Server]On accepte");
 		channel.setDeliverCallback(this);
-		
+
 		//members.add(channel);
 		sendPort(channel);
 
@@ -80,7 +81,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 		buffer.putInt(MESSAGE_SERVER_TYPE.PORT.ordinal());
 		buffer.putInt(port);
 		channel.send(buffer);
-		
+
 		hmPorts.put(channel, port);
 		lastPort++;
 	}
@@ -90,7 +91,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 	@Override
 	public void closed(NioChannel channel) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 
@@ -112,7 +113,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				ObjectOutput out = null;
 				try {
-				out = new ObjectOutputStream(bos);   
+					out = new ObjectOutputStream(bos);   
 					out.writeObject(adrs);
 					out.writeObject(ports);
 				} catch (IOException e) {
@@ -141,4 +142,16 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 
 	}
 
+	public static void main(String args[]){
+
+		try {
+			new MulticastEntryServer("localhost", 8888, Integer.parseInt(args[0]));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
+
+	}
 }

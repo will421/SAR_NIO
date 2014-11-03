@@ -3,6 +3,7 @@ package chat.gui;
 import java.awt.AWTEvent;
 import java.awt.BorderLayout;
 import java.awt.Button;
+import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.EventQueue;
@@ -27,7 +28,11 @@ public class ChatGUI implements Runnable{
 	Frame frame;
 	IChatRoom room;
 	String clientName;
+	
 	Button enterButton;
+	
+	Boolean _autoJoinDebug = false;
+	
 	Button leaveButton;
 	TextArea groupArea;
 	Vector<String> group = new Vector<String>();
@@ -107,10 +112,10 @@ public class ChatGUI implements Runnable{
 		}
 	};
 
-	public ChatGUI(String name, IChatRoom room) {
+	public ChatGUI(String name, IChatRoom room,Boolean autoJoinDebug ) {
 		this.room = room;
 		this.clientName = name;
-
+		this._autoJoinDebug = autoJoinDebug;
 		frame = new Frame();
 		frame.setLayout(new BorderLayout());
 		frame.setTitle(name);
@@ -202,138 +207,152 @@ public class ChatGUI implements Runnable{
 
 		@Override
 		public void windowOpened(WindowEvent e) {
-//			try {
-//				room.enter(clientName, listener);
-//				leaveButton.setEnabled(true);
-//			} catch (Exception ex) {
-//				ex.printStackTrace(System.err);
-//				System.exit(-1);
-//			}
-		}
-
-		@Override
-		public void windowClosing(WindowEvent e) {
-
-			frame.dispose();
-		}
-
-		@Override
-		public void windowClosed(WindowEvent e) {
-			//System.exit(-1); // Die, do not linger around still receiving messages...
-		}
-
-		@Override
-		public void windowIconified(WindowEvent e) {
-		}
-
-		@Override
-		public void windowDeiconified(WindowEvent e) {
-		}
-
-		@Override
-		public void windowActivated(WindowEvent e) {
-		}
-
-		@Override
-		public void windowDeactivated(WindowEvent e) {
-		}
-
-	};
-
-	/**
-	 * Listener on the "join" button to re-join the group.
-	 */
-	class JoinListener implements ActionListener {
-		ChatGUI gui;
-
-		public JoinListener(ChatGUI i) {
-			gui = i;
-		}
-		
-		public void actionPerformed(ActionEvent e) {
-			try {
-				room.enter(clientName, listener);
-				System.out.println(clientName);
-				enterButton.setEnabled(false);
-				leaveButton.setEnabled(true);
-			} catch (Exception ex) {
-				ex.printStackTrace();
-				System.exit(-1); // offending exception, commit Seppuku !
-			}
-		}
-	}
-
-	/**
-	 * Listener on the "leave" button to leave the group.
-	 */
-	class LeaveListener implements ActionListener {
-		ChatGUI gui;
-
-		public LeaveListener(ChatGUI i) {
-			gui = i;
-		}
-
-		public void actionPerformed(ActionEvent e) {
-			try {
-				room.leave();
-				enterButton.setEnabled(true);
-				leaveButton.setEnabled(false);
-			} catch (Exception ex) {
-				ex.printStackTrace();
-				System.exit(-1); // offending exception, commit Seppuku !
-			}
-		}
-	}
-
-	/**
-	 * Listener to quit the application.
-	 */
-	class QuitListener implements ActionListener {
-		ChatGUI gui;
-
-		public QuitListener(ChatGUI i) {
-			gui = i;
-		}
-
-		public void actionPerformed(ActionEvent e) {
-			System.out.println("[GUI]Je quitte " + clientName);
-			//TODO Penser à couper l'engine
+			//			try {
+			//				room.enter(clientName, listener);
+			//				leaveButton.setEnabled(true);
+			//			} catch (Exception ex) {
+			//				ex.printStackTrace(System.err);
+			//				System.exit(-1);
+			//			}
 			
-			frame.setVisible(false);
-		}
-	}
 
-	/**
-	 * Listener on the "send" button to send the message typed in the input text
-	 * area.
-	 */
-	class SendListener implements ActionListener {
-		ChatGUI gui;
+			if (true){
+				try {
+					room.enter(clientName, listener);
+					System.out.println(clientName);
+					enterButton.setEnabled(false);
+					leaveButton.setEnabled(true);
+				} catch (Exception ex) {
+				}
 
-		public SendListener(ChatGUI i) {
-			gui = i;
-		}
+			}
 
-		public void actionPerformed(ActionEvent e) {
-			try {
-				String msg = clientName + " says:" + gui.inputArea.getText();
-				gui.inputArea.setText("");
-				room.send(msg);
-			} catch (Exception ex) {
-				ex.printStackTrace();
-				System.exit(-1); // offending exception, commit Seppuku !
+			}
+
+			@Override
+			public void windowClosing(WindowEvent e) {
+
+				frame.dispose();
+			}
+
+			@Override
+			public void windowClosed(WindowEvent e) {
+				//System.exit(-1); // Die, do not linger around still receiving messages...
+			}
+
+			@Override
+			public void windowIconified(WindowEvent e) {
+			}
+
+			@Override
+			public void windowDeiconified(WindowEvent e) {
+			}
+
+			@Override
+			public void windowActivated(WindowEvent e) {
+			}
+
+			@Override
+			public void windowDeactivated(WindowEvent e) {
+			}
+
+		};
+
+		/**
+		 * Listener on the "join" button to re-join the group.
+		 */
+		class JoinListener implements ActionListener {
+			ChatGUI gui;
+
+			public JoinListener(ChatGUI i) {
+				gui = i;
+			}
+
+			public void actionPerformed(ActionEvent e) {
+				try {
+					room.enter(clientName, listener);
+					System.out.println(clientName);
+					enterButton.setEnabled(false);
+					leaveButton.setEnabled(true);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					System.exit(-1); // offending exception, commit Seppuku !
+				}
 			}
 		}
+
+		/**
+		 * Listener on the "leave" button to leave the group.
+		 */
+		class LeaveListener implements ActionListener {
+			ChatGUI gui;
+
+			public LeaveListener(ChatGUI i) {
+				gui = i;
+			}
+
+			public void actionPerformed(ActionEvent e) {
+				try {
+					room.leave();
+					enterButton.setEnabled(true);
+					leaveButton.setEnabled(false);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					System.exit(-1); // offending exception, commit Seppuku !
+				}
+			}
+		}
+
+		/**
+		 * Listener to quit the application.
+		 */
+		class QuitListener implements ActionListener {
+			ChatGUI gui;
+
+			public QuitListener(ChatGUI i) {
+				gui = i;
+			}
+
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("[GUI]Je quitte " + clientName);
+				//TODO Penser à couper l'engine
+
+				frame.setVisible(false);
+			}
+		}
+
+		/**
+		 * Listener on the "send" button to send the message typed in the input text
+		 * area.
+		 */
+		class SendListener implements ActionListener {
+			ChatGUI gui;
+
+			public SendListener(ChatGUI i) {
+				gui = i;
+			}
+
+			public void actionPerformed(ActionEvent e) {
+				try {
+					String msg = gui.inputArea.getText();
+					gui.inputArea.setText("");
+					System.out.println(msg);
+					room.send(msg);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					System.exit(-1); // offending exception, commit Seppuku !
+				}
+			}
+		}
+
+		@Override
+		public void run() {
+
+			System.out.println("test" + this.clientName);
+
+		}
+
+
+
+
 	}
-
-	@Override
-	public void run() {
-
-		System.out.println("test" + this.clientName);
-
-	}
-
-
-
-
-}

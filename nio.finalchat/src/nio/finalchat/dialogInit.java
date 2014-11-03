@@ -1,6 +1,7 @@
 package nio.finalchat;
 
 import java.awt.BorderLayout;
+import java.awt.Checkbox;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,6 +21,7 @@ public class dialogInit extends JFrame implements ActionListener {
 	JButton launch = null;
 	JButton stop = null;
 	JComboBox<String> listNbClients =null;
+	Checkbox autoJoin;
 	String _adrServer;
 	int _portServer;
 
@@ -32,6 +34,8 @@ public class dialogInit extends JFrame implements ActionListener {
 		
 		launch = new JButton("Launch");
 		stop = new JButton("Stop");
+		autoJoin = new Checkbox("Auto-JOIN",true);
+		
 		
 		String[] choixList = {"2","3","1","4","8"};
 		listNbClients = new JComboBox(choixList);
@@ -40,7 +44,7 @@ public class dialogInit extends JFrame implements ActionListener {
 		JPanel contentPaneSouth = new JPanel(new GridLayout(0,2));
 		JPanel contentPane = new JPanel(new BorderLayout());
 		JPanel contentPaneCenter= new JPanel(new BorderLayout());
-
+		 
 
 		this.setTitle("Demo - MultiCast ");
 		this.setSize(250, 125);
@@ -57,7 +61,8 @@ public class dialogInit extends JFrame implements ActionListener {
 		contentPane.add(contentPaneCenter,BorderLayout.CENTER);
 
 		contentPaneCenter.add(listNbClients,BorderLayout.SOUTH);
-		contentPaneCenter.add(clientsLabel,BorderLayout.CENTER);
+		//contentPaneCenter.add(clientsLabel,BorderLayout.CENTER);
+		contentPaneCenter.add(autoJoin);
 		contentPaneSouth.add(launch);
 		contentPaneSouth.add(stop);
 
