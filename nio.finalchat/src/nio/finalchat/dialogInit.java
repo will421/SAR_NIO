@@ -77,8 +77,13 @@ public class dialogInit extends JFrame implements ActionListener {
 			ChatRoomFinal room;
 			String name;
 
+			
+			int nbrofClients;
+			Object o =listNbClients.getSelectedItem();
+			nbrofClients = Integer.parseInt(o.toString());
+			
 			try {
-				entryServ = new MulticastEntryServer("localhost", 8888, 3);
+				entryServ = new MulticastEntryServer("localhost", 8888, nbrofClients);
 				
 				Thread t = new Thread(entryServ);
 				t.start();
@@ -87,13 +92,7 @@ public class dialogInit extends JFrame implements ActionListener {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-
-			int nbrofClients;
-			Object o =listNbClients.getSelectedItem();
-			nbrofClients = Integer.parseInt(o.toString());
-			
-
-			
+		
 			
 			for(int i =0; i < nbrofClients ;i++){
 

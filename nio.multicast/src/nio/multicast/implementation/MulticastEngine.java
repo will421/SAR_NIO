@@ -1,6 +1,9 @@
 package nio.multicast.implementation;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -26,105 +29,7 @@ import nio.multicast.IMulticastEngine;
 public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectCallback,DeliverCallback {
 
 	
-	class ListMember{
-		public int length;
-		
-		private boolean valid[];
-		private String adrs[];
-		private int ports[];
-		public NioChannel channels[]; //remettre priver
-		
-		
-		public ListMember(int length) {
-			this.length = length;
-			adrs= new String[length];
-			ports = new int[length];
-			channels = new NioChannel[length];
-			valid = new boolean[length];
-			
-			for(int i=0;i<length;i++)
-			{
-				adrs[i] = null;
-				ports[i] = -1;
-				channels[i] = null;
-				valid[i] = false;
-			}
-			
-		}
-		
-		public boolean isConnected(int pid)
-		{
-			return channels[pid]!=null;
-		}
-		
-		public void connected(int pid,NioChannel channel)
-		{
-			channels[pid] = channel;
-		}
-		
-		public void disconnected(int pid)
-		{
-			channels[pid] = null;
-			valid[pid] = false;
-			adrs[pid] = null;
-			ports[pid] = -1;
-		}
-		
-		public void addMember(int pid,String adr,int port)
-		{
-			adrs[pid] = adr;
-			ports[pid] = port;
-			valid[pid] = true;
-		}
-		
-		public String getAdr(int pid)
-		{
-			return adrs[pid];
-		}
-		
-		public int getPort(int pid)
-		{
-			return ports[pid];
-		}
-		public NioChannel getChannel(int pid)
-		{
-			return channels[pid];
-		}
-
-		public boolean full()
-		{
-			boolean b = true;
-			for(NioChannel ch : channels)
-			{
-				if(ch==null)
-				{
-					b = false;
-					break;
-				}
-			}
-			return b;
-		}
-		
-		public boolean contains(NioChannel channel)
-		{
-			return Arrays.asList(channels).contains(channel);
-		}
-		
-		public byte[] getMask()
-		{
-			byte[] mask = new byte[length];
-			for(int i =0;i<length;i++)
-			{
-				if(channels[i]==null)
-					mask[i]=0;
-				else
-					mask[i] =1;
-				
-			}
-			return mask;
-		}
-		
-	}
+	
 	
 	
 	enum ENGINE_STATE{
@@ -146,7 +51,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	private IMulticastCallback callback; //Objet recevant les sorties du multicast engine
 	private NioChannel channelServer; //Channel de communication avec le serveur de groupe
 	private NioServer connectChannel;  //Port de connection à ce membre
-	private int n ; //Numero du membre dans la liste
+	private int mPid ; //Numero du membre dans la liste
 	private int lastConnected; //Dernier membre auquel on s'est connecté (initialisation)
 	private ENGINE_STATE state; //Etat de l'engine
 	private long myClock;
@@ -159,11 +64,11 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	//private int ports[]; //Representation interne de la liste
 	
 	
-	public MulticastEngine(int n) throws Exception {
+	public MulticastEngine() throws Exception {
 		nEngine = new CNioEngine();
 		channelServer = null;
 		callback = null;
-		this.n = n;
+		this.mPid = -1;
 		state = ENGINE_STATE.CONNECT_TO_SERVER;
 		//members = new HashMap<Integer,NioChannel>();
 		members = null;
@@ -191,8 +96,15 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	}
 
 
+
+
+	@Override
+	public List<Integer> getPIDS() {
+		return members.getPIDS();
+	}
 	
-	private void receptionList(NioChannel channel,String[] ips,int[] ports,int n)
+	
+	private void receptionList(String[] ips,int[] ports)
 	{
 		groupSize = ips.length;
 		members = new ListMember(groupSize);
@@ -213,14 +125,16 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 				e.printStackTrace();
 			}
 		}*/
+		/*
 		try {
 			connectChannel =  nEngine.listen(ports[n], this);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		*/
 		
-		lastConnected = n;
+		lastConnected = mPid;
 		try {
 			nEngine.connect(InetAddress.getByName(members.getAdr(lastConnected)),members.getPort(lastConnected),this);
 		} catch (SecurityException | IOException e) {
@@ -236,7 +150,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		ByteBuffer bytes = ByteBuffer.allocate(buf.capacity()+4+8+4);
 		bytes.putInt(MESSAGE_TYPE.MESSAGE.ordinal());
 		bytes.putLong(myClock);
-		bytes.putInt(n);
+		bytes.putInt(mPid);
 		buf.position(0);
 		bytes.put(buf);
 		for(NioChannel channel: members.channels) {
@@ -302,7 +216,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		{
 			if(members.full())
 			{
-				callback.joined(this);
+				callback.joined(this,this.mPid);
 				state = ENGINE_STATE.WORKING;
 			}
 			
@@ -310,7 +224,53 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 
 	}
 	
-	private void handleReceive(ByteBuffer bytes)
+	private void handleReceiveServer(ByteBuffer bytes) {
+		// TODO Auto-generated method stub
+		bytes.position(0);
+		MESSAGE_SERVER_TYPE type = MESSAGE_SERVER_TYPE.values()[bytes.getInt()];
+		if(type==MESSAGE_SERVER_TYPE.PORT)
+		{
+			int port = bytes.getInt();
+			try {
+				connectChannel =  nEngine.listen(port, this);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			ByteBuffer buf = ByteBuffer.allocate(4);
+			buf.putInt(MESSAGE_SERVER_TYPE.READY.ordinal());
+			this.channelServer.send(buf);
+		}
+		else if(type == MESSAGE_SERVER_TYPE.LIST)
+		{
+			String[] ips = null;
+			int[] ports = null;
+			mPid = bytes.getInt();
+			int size = bytes.getInt();
+			byte[] byteArray = new byte[size];
+			bytes.get(byteArray);
+
+			ByteArrayInputStream bis = new ByteArrayInputStream(byteArray);
+			ObjectInput in = null;
+
+			try {
+				in = new ObjectInputStream(bis);
+				ips = (String[]) in.readObject();
+				ports = (int[]) in.readObject();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			receptionList(ips,ports);
+		}
+		
+	}
+	
+	private void handleReceiveMember(ByteBuffer bytes)
 	{
 		bytes.position(0);
 		int type = bytes.getInt();
@@ -386,7 +346,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		bytes.putInt(MESSAGE_TYPE.ACK.ordinal());
 		bytes.putLong(clock);
 		bytes.putInt(pid);
-		bytes.putInt(n);
+		bytes.putInt(mPid);
 
 		for(NioChannel ch : members.channels) {
 		    //Integer key = entry.getKey();
@@ -406,7 +366,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			if(id == -1) //Ca signifie que c'est un nouveau membre
 				return;
 			members.connected(id, channel);
-
+			channel.setDeliverCallback(this);
 			isJoined();
 		}
 	}
@@ -416,14 +376,17 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	@Override
 	public void deliver(NioChannel channel, ByteBuffer bytes) {
 		if(channel==channelServer)
-			receptionList(channel,Option.ips,Option.ports,n);
+		{
+			handleReceiveServer(bytes);
+		}
+			
 		else if(members.contains(channel))
 		{
-			handleReceive(bytes);
+			handleReceiveMember(bytes);
 		}
 	}
-	
-	
+
+
 	@Override
 	public void closed(NioChannel channel) {
 		//Retirer le membre de la liste interne
@@ -436,9 +399,9 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		{
 			//On considere que le channel represente le serveurs
 			channelServer = channel;
+			channel.setDeliverCallback(this);
 			//On conidere recevoir la liste
-			this.deliver(channel, null);
-			
+			//this.deliver(channel, null); //TODO ?
 		} else if (state == ENGINE_STATE.CONNECT_TO_MEMBER)
 		{
 			members.connected(lastConnected, channel);
@@ -462,6 +425,6 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		isJoined();
 		
 	}
-	
+
 	
 }

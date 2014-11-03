@@ -35,8 +35,10 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		this._clientName= clientName;
 		this._adr=adr;
 		this._port=port;
-		this.engine = new MulticastEngine(this._idClient); 
-		
+
+		this.engine = new MulticastEngine(); 
+		//this.engine = new MulticastEngine(this._idClient); 
+
 	}
 
 	@Override
@@ -81,10 +83,13 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		
 	}
 
+
 	@Override
-	public void joined(IMulticastEngine engine) {
+	public void joined(IMulticastEngine engine, int pid) {
 		System.out.println("[Chat"+String.valueOf(this._idClient)+"]On est dans le joined");
-		
+
+		// recuperer id ici maintenant
+
 	}
 	
 	
