@@ -23,6 +23,7 @@ import nio.multicast.IMulticastEngine;
 public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectCallback,DeliverCallback {
 
 	enum ENGINE_STATE{
+		NOTHINGNESS,
 		CONNECT_TO_SERVER,
 		CONNECT_TO_MEMBER,
 		WORKING
@@ -46,7 +47,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		channelServer = null;
 		callback = null;
 		this.mPid = -1;
-		state = ENGINE_STATE.CONNECT_TO_SERVER;
+		state = ENGINE_STATE.NOTHINGNESS;
 		//members = new HashMap<Integer,NioChannel>();
 		members = null;
 		myClock = 0;
@@ -58,15 +59,25 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	
 	@Override
 	public void join(String adr, int port, IMulticastCallback callback) {
-		
-		try {
-			nEngine.connect(InetAddress.getByName(adr), port, this);
-		} catch (SecurityException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(state == ENGINE_STATE.NOTHINGNESS)
+		{
+			state = ENGINE_STATE.CONNECT_TO_SERVER;
+			try {
+				nEngine.connect(InetAddress.getByName(adr), port, this);
+			} catch (SecurityException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			this.callback = callback;
 		}
-		this.callback = callback;
-
+		else
+		{
+			try {
+				throw new Exception("Pas possible d'appeler deux fois join");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override
@@ -138,38 +149,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		// TODO Auto-generated method stub
 		
 	}
-	
-	
-	/*private int getId(InetSocketAddress adr)
-	{
-		List<Integer> l = new LinkedList<>();
-		int res = -1;
-		
-		String adr2 = adr.getHostString();
-		if (adr2.equals("127.0.0.1"))
-			adr2 = "localhost";
-		
-		for(int i =0;i<groupSize;i++)
-		{
-			if(adr2.equals(members.getAdr(i)))
-			{
-				l.add(i);
-			}
-		}
-		
-		for(int i =0;i<l.size();i++)
-		{
-			if(adr.getPort() == members.getPort(l.get(i)))
-			{
-				res = l.get(i);
-				break;
-			}
-		}
-		
-		
-		return res;
-	}*/
-	
+
 	private void isJoined()
 	{
 		if(state==ENGINE_STATE.CONNECT_TO_MEMBER)
@@ -179,8 +159,8 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 				callback.joined(this,this.mPid);
 				state = ENGINE_STATE.WORKING;
 				//TODO temp
-				//String s = "ahaha from "+"{"+mPid+"}";
-				//this.send(s.getBytes(), 0, s.getBytes().length);
+				String s = "ahaha from "+"{"+mPid+"}";
+				this.send(s.getBytes(), 0, s.getBytes().length);
 			}
 			
 		}
@@ -303,8 +283,8 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			if(first.getType()== MESSAGE_TYPE.MESSAGE)
 			{
 				callback.deliver(this, first.getMessage());
-				//String s = new String(first.getMessage().array());
-				//System.out.println("{"+mPid+"}"+"receive : "+s);
+				String s = new String(first.getMessage().array());
+				System.out.println("{"+mPid+"}"+"receive : "+s);
 			}
 			else if (first.getType() == MESSAGE_TYPE.ADD_MEMBER)
 			{
@@ -355,7 +335,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		}
 		else
 		{
-			// new Member ?
+			System.err.println("New member ?");
 		}
 	}
 
@@ -377,6 +357,11 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			buf.putInt(MESSAGE_TYPE.ID.ordinal());
 			buf.putInt(mPid);
 			channel.send(buf);
+		}
+		else
+		{
+			System.err.println("connected error");
+			System.exit(-1);
 		}
 	}
 

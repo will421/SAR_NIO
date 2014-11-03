@@ -98,7 +98,7 @@ public class ListMember{
 				break;
 			}
 		}
-		return channelInLocal==null?false:b;
+		return b && (channelInLocal!=null);
 	}
 
 	public boolean contains(NioChannel channel)
