@@ -96,6 +96,13 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	}
 
 
+
+
+	@Override
+	public List<Integer> getPIDS() {
+		return members.getPIDS();
+	}
+	
 	
 	private void receptionList(String[] ips,int[] ports)
 	{
@@ -209,7 +216,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		{
 			if(members.full())
 			{
-				callback.joined(this);
+				callback.joined(this,this.mPid);
 				state = ENGINE_STATE.WORKING;
 			}
 			
@@ -418,6 +425,6 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		isJoined();
 		
 	}
-	
+
 	
 }

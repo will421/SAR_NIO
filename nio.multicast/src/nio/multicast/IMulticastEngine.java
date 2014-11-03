@@ -1,6 +1,7 @@
 package nio.multicast;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public interface IMulticastEngine {
 	
@@ -45,6 +46,7 @@ public interface IMulticastEngine {
 	   */
 	  public void leave();
 	  
-	 
+	  
+	 public List<Integer> getPIDS();
 	
 }

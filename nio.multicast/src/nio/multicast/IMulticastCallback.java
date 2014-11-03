@@ -18,5 +18,5 @@ public interface IMulticastCallback {
 	  /**
 	   * Callback to notify that the engine is ready
 	   */ 
-	  public void joined(IMulticastEngine engine);
+	  public void joined(IMulticastEngine engine,int pid);
 }

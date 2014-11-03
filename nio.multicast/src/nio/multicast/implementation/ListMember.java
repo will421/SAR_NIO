@@ -1,6 +1,8 @@
 package nio.multicast.implementation;
 
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import nio.engine.NioChannel;
 
@@ -100,6 +102,17 @@ public class ListMember{
 
 		}
 		return mask;
+	}
+	
+	public List<Integer> getPIDS()
+	{
+		List<Integer> res = new LinkedList<Integer>();
+		for(int i = 0;i<length;i++)
+		{
+			if(channels[i]!=null)
+				res.add(i);
+		}
+		return res;
 	}
 
 }
