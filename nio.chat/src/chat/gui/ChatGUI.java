@@ -170,6 +170,7 @@ public class ChatGUI implements Runnable{
 		cont.add(inputZone, BorderLayout.SOUTH);
 
 		frame.setSize(500, 300);
+		frame.setResizable(false);
 		frame.setVisible(true);
 
 	}

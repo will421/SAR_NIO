@@ -17,7 +17,6 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	EventPump m_pump;
 	
-	String _clientName;
 	int _idClient; //pour le PID
 	
 	String _adr;
@@ -27,15 +26,15 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	IMulticastEngine engine;
 	
 	
-	ChatRoomFinal(String clientName,String adr, int port) throws Exception {
+	ChatRoomFinal(String adr, int port) throws Exception {
 		
 		this.m_pump = new EventPump(this);
 		this.m_pump.start();
-		this._idClient = Integer.parseInt(clientName.replaceAll("[^\\d.]", ""));
-		this._clientName= clientName;
+		//this._idClient = Integer.parseInt(clientName.replaceAll("[^\\d.]", ""));
+		//this._clientName= clientName;
 		this._adr=adr;
 		this._port=port;
-
+		this._idClient =-1;
 		this.engine = new MulticastEngine(); 
 		//this.engine = new MulticastEngine(this._idClient); 
 
@@ -46,11 +45,14 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		
 		final ChatRoomFinal cpChatRoom = this;
 		
+
+		System.out.println("[ChatROOM " + this._idClient + " : Je suis dans le enter");
 		m_pump.enqueue(new Runnable() {
 			
 			public void run() {
 				engine.join(_adr,_port,cpChatRoom);
-				engine.mainloop();				
+				engine.mainloop();
+				
 			}
 		});
 		
@@ -59,13 +61,13 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	@Override
 	public void leave() throws ChatException {
-		// TODO Auto-generated method stub
+		System.out.println("[CHATROOM"  + this._idClient+"] On est dans le leave()");
 
 	}
 
 	@Override
 	public void send(String msg) throws ChatException {
-		
+		System.out.println("[CHATROOM"  + this._idClient+"] On est dans le send()");
 	}
 
 	@Override
@@ -73,20 +75,23 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		
 	    ChatRoomFinal room = this;
 	    
-	    new ChatGUI("[Chat"+String.valueOf(this._idClient)+"]Salle de Chat view : " + _clientName, room);
+	    new ChatGUI("client" +_idClient, room);
 	  
 	}
 
 	@Override
 	public void deliver(IMulticastEngine engine, ByteBuffer bytes) {
-		System.out.println("[Chat"+String.valueOf(this._idClient)+"]On est dans le deliver");
+		System.out.println("[CHATROOM"  + this._idClient+"] On est dans le deliver");
 		
 	}
 
 
 	@Override
 	public void joined(IMulticastEngine engine, int pid) {
-		System.out.println("[Chat"+String.valueOf(this._idClient)+"]On est dans le joined");
+		
+		this._idClient=pid;
+		
+		System.out.println("[CHATROOM" +pid+"]");
 
 		// recuperer id ici maintenant
 
