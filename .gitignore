@@ -1,3 +1,5 @@
 .metadata
 *.class
 .recommenders
+.classpath
+*.classpath

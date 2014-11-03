@@ -1,24 +1,38 @@
 package nio.multicast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
 import nio.engine.AcceptCallback;
+import nio.engine.DeliverCallback;
 import nio.engine.NioChannel;
 import nio.engine.NioEngine;
 import nio.engine.NioServer;
 import nio.implementation1.CNioEngine;
+import nio.multicast.implementation.MESSAGE_SERVER_TYPE;
+import nio.multicast.implementation.Option;
 
-public class MulticastEntryServer implements Runnable,AcceptCallback {
+public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCallback {
 
+	private final int initialPort = 50000;
+	private int lastPort = initialPort;
 	
 	private String _adr;
 	private int _port;
 	private int _nbMember;
 	private int _nbMemberLeft;
-	private List<NioChannel> members;
+	private NioChannel members[];
+	private Integer ports[];
+	private String adrs[];
+	private int indice;
 	private NioEngine engine;
+	private HashMap<NioChannel,Integer> hmPorts;
 	
 	
 	public MulticastEntryServer(String adr,int port, int nbMember) throws Exception {
@@ -27,10 +41,12 @@ public class MulticastEntryServer implements Runnable,AcceptCallback {
 		_nbMember = nbMember;
 		_nbMemberLeft = nbMember;
 		engine = new CNioEngine();
-		members = new LinkedList<NioChannel>();
+		members = new NioChannel[nbMember];
+		ports = new Integer[nbMember];
+		adrs = new String[nbMember];
+		hmPorts = new HashMap<NioChannel,Integer>();
+		indice = 0;
 	}
-	
-	
 	
 	
 	@Override
@@ -50,15 +66,24 @@ public class MulticastEntryServer implements Runnable,AcceptCallback {
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {
 		System.out.println("[Server]On accepte");
+		channel.setDeliverCallback(this);
 		
-		_nbMemberLeft--;
-		members.add(channel);
-		if(_nbMemberLeft==0)
-		{
-			//Envoyer la liste à tout le monde
-		}
+		//members.add(channel);
+		sendPort(channel);
+
 	}
 
+	private void sendPort(NioChannel channel)
+	{
+		ByteBuffer buffer = ByteBuffer.allocate(4+4);
+		int port = lastPort;
+		buffer.putInt(MESSAGE_SERVER_TYPE.PORT.ordinal());
+		buffer.putInt(port);
+		channel.send(buffer);
+		
+		hmPorts.put(channel, port);
+		lastPort++;
+	}
 
 
 
@@ -66,6 +91,60 @@ public class MulticastEntryServer implements Runnable,AcceptCallback {
 	public void closed(NioChannel channel) {
 		// TODO Auto-generated method stub
 		
+	}
+
+
+	@Override
+	public void deliver(NioChannel channel, ByteBuffer bytes) {
+		// TODO Auto-generated method stub
+		
+		
+		bytes.position(0);
+		MESSAGE_SERVER_TYPE type = MESSAGE_SERVER_TYPE.values()[bytes.getInt()];
+		if(type == MESSAGE_SERVER_TYPE.READY)
+		{
+			_nbMemberLeft--;
+			members[indice] = channel;
+			adrs[indice]=channel.getRemoteAddress().getHostString();
+			ports[indice] = hmPorts.get(channel);
+			indice++;
+			if(_nbMemberLeft==0)
+			{
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				ObjectOutput out = null;
+				try {
+				out = new ObjectOutputStream(bos);   
+					out.writeObject(adrs);
+					out.writeObject(ports);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				byte[] byteArray = bos.toByteArray();
+				ByteBuffer buffer = ByteBuffer.allocate(4+4+4+byteArray.length);
+				for(int id=0;id<_nbMember;id++)
+				{
+					buffer.position(0);
+					buffer.putInt(MESSAGE_SERVER_TYPE.LIST.ordinal());
+					buffer.putInt(id); //Le pid du membre
+					buffer.putInt(byteArray.length);
+					buffer.put(byteArray);
+					if(members[id]==null)
+					{
+						System.out.println();
+					}
+					members[id].send(buffer);
+				}
+			}
+		}
+		else if(type==MESSAGE_SERVER_TYPE.NEW_PORT)
+		{
+			this.sendPort(channel);
+		}
+		
+		
+		_nbMemberLeft--;
+
 	}
 
 }

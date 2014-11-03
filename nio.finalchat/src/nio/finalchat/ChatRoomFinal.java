@@ -35,7 +35,7 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		this._clientName= clientName;
 		this._adr=adr;
 		this._port=port;
-		this.engine = new MulticastEngine(this._idClient); 
+		this.engine = new MulticastEngine(); 
 		
 	}
 
