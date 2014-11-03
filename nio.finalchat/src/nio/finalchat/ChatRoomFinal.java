@@ -102,7 +102,6 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	public void joined(IMulticastEngine engine, int pid) {
 		this._idClient=pid;
 		System.out.println("[CHATROOM"+pid+"]JOINED");
-		engine.join(_adr,_port, this);
 	}
 
 
