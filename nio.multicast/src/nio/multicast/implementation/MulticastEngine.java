@@ -23,6 +23,7 @@ import nio.multicast.IMulticastEngine;
 public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectCallback,DeliverCallback {
 
 	enum ENGINE_STATE{
+		NOTHINGNESS,
 		CONNECT_TO_SERVER,
 		CONNECT_TO_MEMBER,
 		WORKING
@@ -46,7 +47,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		channelServer = null;
 		callback = null;
 		this.mPid = -1;
-		state = ENGINE_STATE.CONNECT_TO_SERVER;
+		state = ENGINE_STATE.NOTHINGNESS;
 		//members = new HashMap<Integer,NioChannel>();
 		members = null;
 		myClock = 0;
@@ -58,15 +59,25 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	
 	@Override
 	public void join(String adr, int port, IMulticastCallback callback) {
-		
-		try {
-			nEngine.connect(InetAddress.getByName(adr), port, this);
-		} catch (SecurityException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(state == ENGINE_STATE.NOTHINGNESS)
+		{
+			state = ENGINE_STATE.CONNECT_TO_SERVER;
+			try {
+				nEngine.connect(InetAddress.getByName(adr), port, this);
+			} catch (SecurityException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			this.callback = callback;
 		}
-		this.callback = callback;
-
+		else
+		{
+			try {
+				throw new Exception("Pas possible d'appeler deux fois join");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override
@@ -138,54 +149,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		// TODO Auto-generated method stub
 		
 	}
-	
-	
-	/*private int getId(InetSocketAddress adr)
-	{
-		List<Integer> l = new LinkedList<>();
-		int res = -1;
-		
-		String adr2 = adr.getHostString();
-		if (adr2.equals("127.0.0.1"))
-			adr2 = "localhost";
-		
-		for(int i =0;i<groupSize;i++)
-		{
-			if(adr2.equals(members.getAdr(i)))
-			{
-				l.add(i);
-			}
-		}
-		
-		for(int i =0;i<l.size();i++)
-		{
-			if(adr.getPort() == members.getPort(l.get(i)))
-			{
-				res = l.get(i);
-				break;
-			}
-		}
-		
-		
-		return res;
-	}*/
-	
-	private void isJoined()
-	{
-		if(state==ENGINE_STATE.CONNECT_TO_MEMBER)
-		{
-			if(members.full())
-			{
-				callback.joined(this,this.mPid);
-				state = ENGINE_STATE.WORKING;
-				//TODO temp
-				//String s = "ahaha from "+"{"+mPid+"}";
-				//this.send(s.getBytes(), 0, s.getBytes().length);
-			}
-			
-		}
 
-	}
 	
 	private void handleReceiveServer(ByteBuffer bytes) {
 		// TODO Auto-generated method stub
@@ -203,7 +167,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			}
 			
 			ByteBuffer buf = ByteBuffer.allocate(4);
-			buf.putInt(MESSAGE_SERVER_TYPE.READY.ordinal());
+			buf.putInt(MESSAGE_SERVER_TYPE.BINDED.ordinal());
 			this.channelServer.send(buf);
 		}
 		else if(type == MESSAGE_SERVER_TYPE.LIST)
@@ -230,6 +194,13 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 				e.printStackTrace();
 			}
 			receptionList(ips,ports);
+		} else if(type==MESSAGE_SERVER_TYPE.BEGIN)
+		{
+			callback.joined(this, mPid);
+			state = ENGINE_STATE.WORKING;
+			//TODO temp
+			String s = "ahaha from "+"{"+mPid+"}";
+			this.send(s.getBytes(), 0, s.getBytes().length);
 		}
 		
 	}
@@ -251,16 +222,26 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	
 	private void handleReceiveMessage(ByteBuffer bytes)
 	{
+		
+		bytes.position(0);
+		bytes.getInt();
+		long clock = bytes.getLong();
+		int pidM = bytes.getInt();
+		
 		//add to stack with clock
-		MulticastQueueElement el = new MulticastQueueElement(bytes, groupSize);
-		queue.add(el);
-		Collections.sort(queue);
+		MulticastQueueElement el = MulticastQueueElement.getElement(queue, clock, pidM);
+		if(el==null)
+		{
+			el = new MulticastQueueElement(bytes, groupSize);
+			queue.add(el);
+			Collections.sort(queue);
+		}
 	
 		myClock = Math.max(myClock,el.getClock());
 		
 		//TODO REMOVE
-		//sendACK(bytes);
-		handleDeliver();
+		sendACK(bytes);
+		//handleDeliver();
 		//callback.deliver(this, bytes); //TODO A retirer
 	}
 	
@@ -289,22 +270,24 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		el.ackReceived(pidS);
 		
 		//Est ce que l'on delivre ou non ?
-		handleDeliver();
+		tryToDeliver();
 		
 	}
 	
 	
-	private void handleDeliver()
+	private void tryToDeliver()
 	{
 		MulticastQueueElement first = queue.get(0);
 		//TODO handleDeliver
-		if(true)
+		
+		boolean deliver = (members.getMask() & ~first.getAcksMask())==0 ;
+		if(deliver)
 		{
 			if(first.getType()== MESSAGE_TYPE.MESSAGE)
 			{
 				callback.deliver(this, first.getMessage());
-				//String s = new String(first.getMessage().array());
-				//System.out.println("{"+mPid+"}"+"receive : "+s);
+				String s = new String(first.getMessage().array());
+				System.out.println("{"+mPid+"}"+"receive : "+s);
 			}
 			else if (first.getType() == MESSAGE_TYPE.ADD_MEMBER)
 			{
@@ -331,6 +314,10 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 
 		for(NioChannel ch : members.channels) {
 		    //Integer key = entry.getKey();
+			if(ch==null)
+			{
+				continue;
+			}
 		    ch.send(bytes);
 		}
 		myClock++;
@@ -355,7 +342,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		}
 		else
 		{
-			// new Member ?
+			System.err.println("New member ?");
 		}
 	}
 
@@ -377,6 +364,11 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			buf.putInt(MESSAGE_TYPE.ID.ordinal());
 			buf.putInt(mPid);
 			channel.send(buf);
+		}
+		else
+		{
+			System.err.println("connected error");
+			System.exit(-1);
 		}
 	}
 
@@ -406,13 +398,21 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 				{
 					members.connected(id, channel);
 				}
-				isJoined();
+				if(state==ENGINE_STATE.CONNECT_TO_MEMBER)
+				{
+					if(members.full())
+					{
+						ByteBuffer buff = ByteBuffer.allocate(4);
+						buff.putInt(MESSAGE_SERVER_TYPE.READY.ordinal());
+						channelServer.send(buff);
+					}
+				}
 			}
 			unknowChannels.remove(channel);
 		}
 	}
-
-
+	
+	
 	@Override
 	public void closed(NioChannel channel) {
 		//Retirer le membre de la liste interne

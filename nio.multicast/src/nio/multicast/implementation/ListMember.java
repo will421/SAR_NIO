@@ -98,7 +98,7 @@ public class ListMember{
 				break;
 			}
 		}
-		return channelInLocal==null?false:b;
+		return b && (channelInLocal!=null);
 	}
 
 	public boolean contains(NioChannel channel)
@@ -106,20 +106,21 @@ public class ListMember{
 		return Arrays.asList(channels).contains(channel);
 	}
 
-	public byte[] getMask()
+	public int getMask()
 	{
-		byte[] mask = new byte[length];
+		int mask = 0;
 		for(int i =0;i<length;i++)
 		{
 			if(channels[i]==null)
-				mask[i]=0;
+			{}
 			else
-				mask[i] =1;
-
+			{
+				mask = mask | (int)Math.pow(2, i);
+			}
 		}
 		return mask;
 	}
-	
+
 	public List<Integer> getPIDS()
 	{
 		List<Integer> res = new LinkedList<Integer>();

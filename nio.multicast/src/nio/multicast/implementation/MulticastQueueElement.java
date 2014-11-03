@@ -16,7 +16,7 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 	private ByteBuffer message;
 	private long clock;
 	private int pid;
-	private byte[] acks;
+	private boolean[] acks;
 	
 
 	public MulticastQueueElement(ByteBuffer bytes,int groupSize) {
@@ -27,7 +27,7 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 		ByteBuffer tmp = bytes.slice();
 		message = ByteBuffer.allocate(tmp.remaining());
 		message.put(tmp);
-		acks = new byte[groupSize];
+		acks = new boolean[groupSize];
 	}
 	
 	/**
@@ -39,7 +39,7 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 		this.clock = clock;
 		this.pid = pid;
 		message = null;
-		acks = new byte[groupSize];
+		acks = new boolean[groupSize];
 	}
 	
 	public static MulticastQueueElement getElement(List<MulticastQueueElement> list,long clock,int pidM)
@@ -55,7 +55,7 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 	
 	public void ackReceived(int pidS)
 	{
-		acks[pidS]=1;
+		acks[pidS]=true;
 	}
 	
 	public long getClock()
@@ -96,5 +96,22 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 	public MESSAGE_TYPE getType()
 	{
 		return type;
+	}
+	
+	public int getAcksMask()
+	{
+		int res = 0;
+		for(int i =0;i<acks.length;i++)
+		{
+			if(acks[i])
+			{
+				res = res | (int)Math.pow(2, i);
+			}
+			else
+			{
+				
+			}
+		}
+		return res;
 	}
 }
