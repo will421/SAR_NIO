@@ -62,6 +62,12 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 	{
 		return clock;
 	}
+	
+	public int getPid()
+	{
+		return pid;
+	}
+	
 	@Override
 	public int compareTo(MulticastQueueElement o) {
 		MulticastQueueElement elm = (MulticastQueueElement)o;
@@ -81,7 +87,6 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 					throw new Exception("Should not occur");
 				} catch (Exception e) {
 					e.printStackTrace();
-					System.exit(-1);
 				}
 				return 0;
 			}
@@ -114,4 +119,6 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 		}
 		return res;
 	}
+	
+
 }

@@ -37,7 +37,7 @@ public class dialogInit extends JFrame implements ActionListener {
 		autoJoin = new Checkbox("Auto-JOIN",true);
 		
 		
-		String[] choixList = {"2","3","1","4","8"};
+		String[] choixList = {"3","2","3","1","4","8"};
 		listNbClients = new JComboBox(choixList);
 		JLabel clientsLabel = new JLabel(" Nombre de clients à lancer pour démo :");
 		

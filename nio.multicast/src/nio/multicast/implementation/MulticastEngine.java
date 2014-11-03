@@ -128,6 +128,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		    //Integer key = entry.getKey();
 		    channel.send(bytes);
 		}
+		System.out.println("{"+mPid+"}"+"Send M("+myClock+","+mPid+") x"+members.channels.length);
 		myClock++;
 	}
 
@@ -202,6 +203,14 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			String s = "ahaha from "+"{"+mPid+"}";
 			this.send(s.getBytes(), 0, s.getBytes().length);
 		}
+		else
+		{
+			try {
+				throw new Exception("Should not occur");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 		
 	}
 	
@@ -217,6 +226,14 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		} else if(type==MESSAGE_TYPE.ACK.ordinal())
 		{
 			handleReceiveACK(bytes);
+		}
+		else
+		{
+			try {
+				throw new Exception("Should not occur");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -260,6 +277,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		long clock = bytes.getLong();
 		int pidM = bytes.getInt();
 		int pidS = bytes.getInt();
+		System.out.println("{"+mPid+"}:ACK:M("+clock+","+pidM+")/"+pidS);
 		MulticastQueueElement el = MulticastQueueElement.getElement(queue, clock, pidM);
 		if (el==null)
 		{
@@ -277,24 +295,32 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	
 	private void tryToDeliver()
 	{
-		MulticastQueueElement first = queue.get(0);
-		//TODO handleDeliver
-		
+		if(queue.isEmpty())
+			return;
+		MulticastQueueElement first= queue.get(0);
 		boolean deliver = (members.getMask() & ~first.getAcksMask())==0 ;
-		if(deliver)
+		
+		while(deliver)
 		{
 			if(first.getType()== MESSAGE_TYPE.MESSAGE)
 			{
 				callback.deliver(this, first.getMessage());
 				String s = new String(first.getMessage().array());
-				System.out.println("{"+mPid+"}"+"receive : "+s);
+				System.out.println("{"+mPid+"}"+"deliver : M("+first.getClock()+","+first.getPid()+")"+"->"+s);
 			}
 			else if (first.getType() == MESSAGE_TYPE.ADD_MEMBER)
 			{
 				//add member
 			}
 			queue.remove(0);
+			
+			
+			if(queue.isEmpty())
+				return;
+			first = queue.get(0);
+			deliver = (members.getMask() & ~first.getAcksMask())==0 ;
 		}
+
 		
 	}
 	
@@ -342,7 +368,11 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		}
 		else
 		{
-			System.err.println("New member ?");
+			try {
+				throw new Exception("Should not occur");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -367,8 +397,11 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		}
 		else
 		{
-			System.err.println("connected error");
-			System.exit(-1);
+			try {
+				throw new Exception("Should not occur:new member ?");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -408,7 +441,23 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 					}
 				}
 			}
+			else
+			{
+				try {
+					throw new Exception("Should not occur");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
 			unknowChannels.remove(channel);
+		}
+		else
+		{
+			try {
+				throw new Exception("Should not occur");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	

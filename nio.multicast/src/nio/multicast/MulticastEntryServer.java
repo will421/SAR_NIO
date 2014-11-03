@@ -34,6 +34,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 	private int indice;
 	private NioEngine engine;
 	private HashMap<NioChannel,Integer> hmPorts;
+	private List<NioChannel> ready;
 
 
 	public MulticastEntryServer(String adr,int port, int nbMember) throws Exception {
@@ -47,6 +48,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 		adrs = new String[nbMember];
 		hmPorts = new HashMap<NioChannel,Integer>();
 		indice = 0;
+		ready = new LinkedList<NioChannel>();
 	}
 
 
@@ -81,7 +83,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 		buffer.putInt(MESSAGE_SERVER_TYPE.PORT.ordinal());
 		buffer.putInt(port);
 		channel.send(buffer);
-
+		
 		hmPorts.put(channel, port);
 		lastPort++;
 	}
@@ -101,7 +103,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 		bytes.position(0);
 		MESSAGE_SERVER_TYPE type = MESSAGE_SERVER_TYPE.values()[bytes.getInt()];
 		System.out.println("[Server]Type:"+type.toString()+" delivered");
-		if(type == MESSAGE_SERVER_TYPE.READY)
+		if(type == MESSAGE_SERVER_TYPE.BINDED)
 		{
 			_nbMemberLeft--;
 			members[indice] = channel;
@@ -139,7 +141,26 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 		{
 			this.sendPort(channel);
 		}
-
+		else if(type==MESSAGE_SERVER_TYPE.READY)
+		{
+			boolean allReady = true;
+			ready.add(channel);
+			for(int id=0;id<_nbMember;id++)
+			{
+				if(!ready.contains(members[id]))
+				{
+					allReady =false;
+					break;
+				}
+			}
+			if(allReady)
+			{
+				ByteBuffer buf = ByteBuffer.allocate(4);
+				buf.putInt(MESSAGE_SERVER_TYPE.BEGIN.ordinal());
+				for(NioChannel ch : members)
+					ch.send(buf);
+			}
+		}
 	}
 
 	public static void main(String args[]){
