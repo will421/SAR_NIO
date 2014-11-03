@@ -1,3 +1,6 @@
 .metadata
 *.class
 .recommenders
+.settings
+*.prefs
+*.classpath
