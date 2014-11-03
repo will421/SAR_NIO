@@ -175,7 +175,6 @@ public class ChatGUI implements Runnable{
 	}
 
 	void updateGroup() {
-		
 		System.out.println("[GUI]Updating group...");
 		int rows = deliveredMessages.getColumns();
 		if (rows < group.size())
