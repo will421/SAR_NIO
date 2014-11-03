@@ -4,17 +4,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.net.ConnectException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
 
 import nio.engine.AcceptCallback;
 import nio.engine.ConnectCallback;
@@ -28,26 +22,12 @@ import nio.multicast.IMulticastEngine;
 
 public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectCallback,DeliverCallback {
 
-	
-	
-	
-	
 	enum ENGINE_STATE{
 		CONNECT_TO_SERVER,
 		CONNECT_TO_MEMBER,
 		WORKING
 	}
-	
-	
-	enum MESSAGE_TYPE{
-		MESSAGE,
-		ACK,
-		ADD_MEMBER,
-		NOT_RECEIVED_YET,
-		ID
-	}
-	
-	
+
 	private NioEngine nEngine;	//NioEngine utilisé
 	private IMulticastCallback callback; //Objet recevant les sorties du multicast engine
 	private NioChannel channelServer; //Channel de communication avec le serveur de groupe
@@ -60,10 +40,6 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	private List<NioChannel> unknowChannels;
 	
 	private ListMember members;
-	//private HashMap<Integer,NioChannel> members; //Membres du groupes
-	//private String adrGroup[]; //Representation interne de la liste
-	//private int ports[]; //Representation interne de la liste
-	
 	
 	public MulticastEngine() throws Exception {
 		nEngine = new CNioEngine();
@@ -163,7 +139,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	}
 	
 	
-	private int getId(InetSocketAddress adr)
+	/*private int getId(InetSocketAddress adr)
 	{
 		List<Integer> l = new LinkedList<>();
 		int res = -1;
@@ -191,7 +167,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		
 		
 		return res;
-	}
+	}*/
 	
 	private void isJoined()
 	{
@@ -224,7 +200,6 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			
 			ByteBuffer buf = ByteBuffer.allocate(4);
 			buf.putInt(MESSAGE_SERVER_TYPE.READY.ordinal());
-			int i =MESSAGE_SERVER_TYPE.READY.ordinal(); 
 			this.channelServer.send(buf);
 		}
 		else if(type == MESSAGE_SERVER_TYPE.LIST)
@@ -316,6 +291,24 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	{
 		MulticastQueueElement first = queue.get(0);
 		//TODO handleDeliver
+		if(true)
+		{
+			ByteBuffer buf = first.getMessage();
+			MESSAGE_TYPE type = MESSAGE_TYPE.values()[buf.getInt()];
+			if(type == MESSAGE_TYPE.MESSAGE)
+			{
+				long clock = buf.getLong();
+				int pid = buf.getInt();
+				ByteBuffer message = buf.slice();
+				callback.deliver(this, message);
+			}
+			else if (type == MESSAGE_TYPE.ADD_MEMBER)
+			{
+				//add member
+			}
+			queue.remove(0);
+		}
+		
 	}
 	
 	private void sendACK(ByteBuffer buf)
@@ -354,10 +347,6 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 				buf.putInt(MESSAGE_TYPE.ID.ordinal());
 				buf.putInt(mPid);
 				channel.send(buf);
-				/*
-				members.connected(id, channel);
-				channel.setDeliverCallback(this);
-				isJoined();*/
 			}
 		}
 		else

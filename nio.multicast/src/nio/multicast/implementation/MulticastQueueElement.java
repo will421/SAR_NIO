@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import nio.engine.NioChannel;
-import nio.multicast.implementation.MulticastEngine.MESSAGE_TYPE;
 
 /**
  * Represente un element de la queue de message multicast d'un engine
@@ -85,6 +84,11 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 				return 0;
 			}
 		}
+	}
+	
+	public ByteBuffer getMessage()
+	{
+		return message;
 	}
 	 
 }

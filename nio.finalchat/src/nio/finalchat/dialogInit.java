@@ -33,7 +33,7 @@ public class dialogInit extends JFrame implements ActionListener {
 		launch = new JButton("Launch");
 		stop = new JButton("Stop");
 		
-		String[] choixList = {"2","4","8"};
+		String[] choixList = {"2","3","4","8"};
 		listNbClients = new JComboBox(choixList);
 		JLabel clientsLabel = new JLabel(" Nombre de clients à lancer pour démo :");
 		

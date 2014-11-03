@@ -7,7 +7,7 @@ public interface IMulticastEngine {
 	
 	
 	/**
-	 * Ask for join a group identified by adr and port of a multicastServer
+	 * Ask for join a group identified by adr and port of a multicastEntryServer
 	 * @param adr
 	 * @param port
 	 * @param callback
@@ -28,6 +28,7 @@ public interface IMulticastEngine {
 	  /**
 	   * Send the given byte buffer. No copy is made, so the buffer 
 	   * should no longer be used by the code sending it.
+	   * Send only if joined as occured
 	   * @param buf
 	   */
 	  public abstract void send(ByteBuffer buf);
@@ -35,18 +36,19 @@ public interface IMulticastEngine {
 	  /**
 	   * Sending the given byte array, a copy is made into internal buffers,
 	   * so the array can be reused after sending it.
+	   * Send only if joined as occured
 	   * @param bytes
 	   * @param offset
 	   * @param length
 	   */
 	  public abstract void send(byte[] bytes, int offset, int length);
-	  
+
 	  /**
 	   * Ask for leaving the group and do not receive message from it
 	   */
 	  public void leave();
-	  
-	  
-	 public List<Integer> getPIDS();
+
+
+	  public List<Integer> getPIDS();
 	
 }
