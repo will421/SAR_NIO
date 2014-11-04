@@ -16,6 +16,7 @@ import java.util.LinkedList;
 
 import nio.engine.AcceptCallback;
 import nio.engine.ConnectCallback;
+import nio.engine.NioChannel;
 import nio.engine.NioEngine;
 import nio.engine.NioServer;
 
@@ -251,10 +252,14 @@ public class CNioEngine extends NioEngine {
 		}
 	}
 
-	public void handleSocketToClose(SocketChannel socketChannel,SelectionKey key)
+	synchronized public void handleSocketToClose(SocketChannel socketChannel,SelectionKey key)
 	{
 		//System.out.println("----------- On ferme ce socket !----------");
-		nioChannels.remove(socketChannel).close();
+
+
+		NioChannel ch = nioChannels.remove(socketChannel);
+		if(ch!=null)
+			ch.close();
 		if(key!=null)
 			key.cancel();
 	}

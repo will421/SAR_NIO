@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -104,7 +105,7 @@ public class MulticastEngine implements IMulticastEngine, AcceptCallback,
 			try {
 				nEngine.connect(InetAddress.getByName(members.getAdr(i)),
 						members.getPort(i), this);
-				System.out.println("{" + mPid + "} connect to {" + i + "}");
+				//System.out.println("{" + mPid + "} connect to {" + i + "}");
 			} catch (SecurityException | IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -127,8 +128,7 @@ public class MulticastEngine implements IMulticastEngine, AcceptCallback,
 			if(channel!=null)
 				channel.send(bytes);
 		}
-		System.out.println("{" + mPid + "}" + "Send M(" + myClock + "," + mPid
-				+ ")");
+		//System.out.println("{" + mPid + "}" + "Send M(" + myClock + "," + mPid+ ")");
 		myClock++;
 	}
 
@@ -164,11 +164,15 @@ public class MulticastEngine implements IMulticastEngine, AcceptCallback,
 			int port = bytes.getInt();
 			try {
 				connectChannel = nEngine.listen(port, this);
-			} catch (IOException e) {
+			}catch (BindException e){
+				ByteBuffer buf = ByteBuffer.allocate(4);
+				buf.putInt(MESSAGE_SERVER_TYPE.NEW_PORT.ordinal());
+				this.channelServer.send(buf);
+				return;
+			}catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-
 			ByteBuffer buf = ByteBuffer.allocate(4);
 			buf.putInt(MESSAGE_SERVER_TYPE.BINDED.ordinal());
 			this.channelServer.send(buf);
@@ -203,9 +207,6 @@ public class MulticastEngine implements IMulticastEngine, AcceptCallback,
 				if(members.channels[i]!=null)
 					callback.memberJoin(i);
 			}
-			// TODO temp
-			// String s = "ahaha from "+"{"+mPid+"}";
-			// this.send(s.getBytes(), 0, s.getBytes().length);
 		} else {
 			try {
 				throw new Exception("Should not occur");
@@ -290,8 +291,7 @@ public class MulticastEngine implements IMulticastEngine, AcceptCallback,
 		if (queue.isEmpty())
 			return;
 		MulticastQueueElement first = queue.get(0);
-		System.out.println(this.toString() + "||"
-				+ Arrays.toString(queue.toArray()));
+		//System.out.println(this.toString() + "||"+ Arrays.toString(queue.toArray()));
 		boolean deliver = (members.getMask() & ~first.getAcksMask()) == 0;
 		if (deliver) {
 			if (first.getType() == MESSAGE_TYPE.MESSAGE) {
@@ -348,9 +348,8 @@ public class MulticastEngine implements IMulticastEngine, AcceptCallback,
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {
 		if (state == ENGINE_STATE.CONNECT_TO_MEMBER) {
-			if (connectChannel == server) // Si l'on cherche a se connecter à
-											// mon port de connexion dedié au
-											// groupe
+			if (connectChannel == server) 
+				// Si l'on cherche a se connecter à mon port de connexion dedié au groupe
 			{
 				unknowChannels.add(channel);
 				channel.setDeliverCallback(this);

@@ -21,7 +21,7 @@ import nio.multicast.implementation.Option;
 
 public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCallback {
 
-	private final int initialPort = 50000;
+	private final int initialPort = 30000;
 	private int lastPort = initialPort;
 
 	private String _adr;
@@ -43,9 +43,11 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 		_nbMember = nbMember;
 		_nbMemberLeft = nbMember;
 		engine = new CNioEngine();
+		
 		members = new NioChannel[nbMember];
-		ports = new int[nbMember];
 		adrs = new String[nbMember];
+		ports = new int[nbMember];
+		
 		hmPorts = new HashMap<NioChannel,Integer>();
 		indice = 0;
 		ready = new LinkedList<NioChannel>();
@@ -62,9 +64,6 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 			e.printStackTrace();
 		}
 	}
-
-
-
 
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {
