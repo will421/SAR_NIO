@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -45,6 +46,8 @@ public class CNioChannel extends NioChannel {
 	private ConnectCallback cCallback;
 	private AcceptCallback aCallback;
 	
+	private Selector _selector;
+	
 	private SocketChannel socketChannel;
 	private CNioEngine nEngine;
 
@@ -77,6 +80,7 @@ public class CNioChannel extends NioChannel {
 		this.nEngine = nEngine;
 		cCallback = callback;
 		
+		_selector = nEngine.selector;
 		
 		this.buffers_out = new LinkedList<ByteBuffer>();
 		buffer_length = ByteBuffer.allocate(4);
@@ -387,4 +391,6 @@ public class CNioChannel extends NioChannel {
 		
 		return java.util.Arrays.equals(bytes,bytes2);
 	}
+
+
 }

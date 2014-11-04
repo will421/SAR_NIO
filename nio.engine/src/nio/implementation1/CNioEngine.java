@@ -83,7 +83,11 @@ public class CNioEngine extends NioEngine {
 		ssc.configureBlocking(false);
 		InetSocketAddress isa = new InetSocketAddress("localhost", port);
 		ssc.socket().bind(isa);
-		ssc.register(selector, SelectionKey.OP_ACCEPT);
+
+		synchronized (this) {
+			ssc.register(selector, SelectionKey.OP_ACCEPT);
+		}
+
 		nServer = new CNioServer(ssc,callback);
 		//listening.put(ssc, callback);
 		nioServers.put(ssc, nServer);
@@ -102,7 +106,10 @@ public class CNioEngine extends NioEngine {
 
 		sc = SocketChannel.open();
 		sc.configureBlocking(false);
-		sc.register(selector, SelectionKey.OP_CONNECT);
+
+		synchronized (this) {
+			sc.register(selector, SelectionKey.OP_CONNECT);
+		}
 		sc.connect(new InetSocketAddress(hostAddress, port));
 
 		CNioChannel nChannel  = new CNioChannel(sc, this,callback);
@@ -120,7 +127,7 @@ public class CNioEngine extends NioEngine {
 	 */
 	private void handleAccept(SelectionKey key) {
 		//todo : IOException
-		
+
 		acceptCount ++;
 
 		SocketChannel socketChannel = null;
@@ -129,8 +136,10 @@ public class CNioEngine extends NioEngine {
 		try {
 			socketChannel = serverSocketChannel.accept();
 			socketChannel.configureBlocking(false);
-			socketChannel.register(this.selector, SelectionKey.OP_READ);
 
+			synchronized (this) {
+				socketChannel.register(this.selector, SelectionKey.OP_READ);
+			}
 			AcceptCallback callback = nioServers.get(serverSocketChannel).getCallback();
 			CNioChannel nChannel = new CNioChannel(socketChannel, this,callback);
 			nioChannels.put(socketChannel, nChannel);
@@ -151,7 +160,7 @@ public class CNioEngine extends NioEngine {
 	 */
 	private void handleConnection(SelectionKey key) {
 		//todo IOEXCEPTION
-		
+
 		connectCount++;
 
 
@@ -165,8 +174,10 @@ public class CNioEngine extends NioEngine {
 			key.cancel();
 			return;
 		}
-		key.interestOps(SelectionKey.OP_READ);
 
+		synchronized (this) {
+			key.interestOps(SelectionKey.OP_READ);
+		}
 		nioChannels.get(socketChannel).connected();
 
 	}
@@ -224,7 +235,9 @@ public class CNioEngine extends NioEngine {
 		if(res) 
 			// Pour retirer l'interet en ecriture, uniquement dans le cas où plus rien à ecrire
 			// Dependera de la valeur de retour de automate
-			key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
+			synchronized (this) {
+				key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
+			}
 	}
 
 
@@ -243,7 +256,15 @@ public class CNioEngine extends NioEngine {
 		//System.out.println("----------- On ferme ce socket !----------");
 		nioChannels.remove(socketChannel).close();
 		if(key!=null)
-		key.cancel();
+			key.cancel();
 	}
+
+	@Override
+	public Selector getSelector() {
+
+		return selector;
+	}
+
+
 
 }

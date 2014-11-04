@@ -18,15 +18,16 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	EventPump m_pump;
 
 	int _idClient; //pour le PID
-
-	String _adr;
 	int _port;
+	String _adr;
+	
+	Boolean _autoJoinDebug;
 
 	IChatListener m_listener;
 	IMulticastEngine engine;
 
 
-	ChatRoomFinal(String adr, int port) throws Exception {
+	ChatRoomFinal(String adr, int port,Boolean autoJoinDebug) throws Exception {
 
 		this.m_pump = new EventPump(this);
 		this.m_pump.start();
@@ -36,6 +37,7 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		this._port=port;
 		this._idClient =-1;
 		this.engine = new MulticastEngine();  
+		this._autoJoinDebug=autoJoinDebug;
 
 	}
 
@@ -44,7 +46,8 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 		final ChatRoomFinal cpChatRoom = this;
 
-
+		m_listener = l;
+		
 		m_pump.enqueue(new Runnable() {
 
 			public void run() {
@@ -67,12 +70,10 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		final byte[] msgbb;
 
 		msgbb= msg.getBytes();
-
-		m_pump.enqueue(new Runnable() {
-			public void run() {
-				engine.send(msgbb,0, msgbb.length);;
-			};
-		});
+		
+		engine.send(msgbb,0, msgbb.length);
+		engine.getSelector().wakeup();
+		
 	}
 
 	@Override
@@ -81,15 +82,17 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		ChatRoomFinal room = this;
 		
 		String name = "" + _idClient;
-		new ChatGUI(name, room,false);
+		new ChatGUI(name, room,room._autoJoinDebug);
 
 	}
 
 	@Override
 	public void deliver(IMulticastEngine engine, ByteBuffer bytes) {
 		
-    //	engine.send( bytes.ge), 0 , bytes.limit() );
-
+		
+	    String msg = new String(bytes.array());
+		
+		m_listener.deliver(msg);
 	}
 
 
@@ -97,18 +100,6 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	public void joined(IMulticastEngine engine, int pid) {
 		_idClient=pid;
 	}
-
-   public static void main(String args[]){
-	   
-	   try {
-		new ChatRoomFinal(args[0], Integer.parseInt(args[1])).run();
-	} catch (Exception e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
-	   
-	   
-   }
 
 
 }

@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.nio.channels.Selector;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -490,6 +491,9 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		members.disconnected(channel);
 	}
 
+	public Selector getSelector(){
+		return nEngine.getSelector();
+	}
 
 
 }

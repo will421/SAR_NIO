@@ -31,7 +31,7 @@ public class ChatGUI implements Runnable{
 	
 	Button enterButton;
 	
-	Boolean _autoJoinDebug = false;
+	Boolean _autoJoinDebug;
 	
 	Button leaveButton;
 	TextArea groupArea;
@@ -112,13 +112,13 @@ public class ChatGUI implements Runnable{
 		}
 	};
 
-	public ChatGUI(String name, IChatRoom room,Boolean autoJoinDebug ) {
+	public ChatGUI(String clientName, IChatRoom room,Boolean autoJoinDebug ) {
 		this.room = room;
-		this.clientName = name;
+		this.clientName = clientName;
 		this._autoJoinDebug = autoJoinDebug;
 		frame = new Frame();
 		frame.setLayout(new BorderLayout());
-		frame.setTitle(name);
+		frame.setTitle("Messagerie");
 		frame.addWindowListener(wl); // so to enter the chat room once the window
 		// has been opened.
 
@@ -174,7 +174,7 @@ public class ChatGUI implements Runnable{
 
 		cont.add(inputZone, BorderLayout.SOUTH);
 
-		frame.setSize(500, 300);
+		frame.setSize(800, 300);
 		frame.setResizable(false);
 		frame.setVisible(true);
 
@@ -207,16 +207,8 @@ public class ChatGUI implements Runnable{
 
 		@Override
 		public void windowOpened(WindowEvent e) {
-			//			try {
-			//				room.enter(clientName, listener);
-			//				leaveButton.setEnabled(true);
-			//			} catch (Exception ex) {
-			//				ex.printStackTrace(System.err);
-			//				System.exit(-1);
-			//			}
-			
 
-			if (true){
+			if (_autoJoinDebug){
 				try {
 					room.enter(clientName, listener);
 					System.out.println(clientName);
@@ -271,7 +263,9 @@ public class ChatGUI implements Runnable{
 			public void actionPerformed(ActionEvent e) {
 				try {
 					room.enter(clientName, listener);
-					System.out.println(clientName);
+
+					frame.setTitle(clientName);
+					
 					enterButton.setEnabled(false);
 					leaveButton.setEnabled(true);
 				} catch (Exception ex) {
@@ -348,11 +342,8 @@ public class ChatGUI implements Runnable{
 		@Override
 		public void run() {
 
-			System.out.println("test" + this.clientName);
 
 		}
-
-
 
 
 	}

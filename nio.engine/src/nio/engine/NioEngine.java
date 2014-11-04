@@ -3,6 +3,7 @@ package nio.engine;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.channels.Selector;
 
 public abstract class NioEngine {
 
@@ -146,6 +147,8 @@ public abstract class NioEngine {
    */
   public abstract void connect(InetAddress hostAddress, int port,
       ConnectCallback callback) throws UnknownHostException, SecurityException, IOException;
+  
+  public abstract Selector getSelector();
   
 
 }
