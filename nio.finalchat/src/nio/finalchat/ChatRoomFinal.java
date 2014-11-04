@@ -16,8 +16,10 @@ import chat.gui.IChatRoom.IChatListener;
 public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	EventPump m_pump;
-
-	int _idClient; //pour le PID
+	String _clientName;
+	ChatGUI _gui;
+	
+	int _idClient;
 	int _port;
 	String _adr;
 	
@@ -35,7 +37,7 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		//this._clientName= clientName;
 		this._adr=adr;
 		this._port=port;
-		this._idClient =-1;
+		this._idClient =-1; // = -1 toujours pas dans le groupe
 		this.engine = new MulticastEngine();  
 		this._autoJoinDebug=autoJoinDebug;
 
@@ -61,16 +63,19 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	@Override
 	public void leave() throws ChatException {
+		
+		System.out.println("[CHAT] : Je leave");
 		engine.leave();
 	}
 
 	@Override
 	public void send(String msg) throws ChatException {
-
+		
 		final byte[] msgbb;
 
-		msgbb= msg.getBytes();
 		
+		msgbb= msg.getBytes();
+		System.out.println("[CHAT] :" + msgbb);
 		engine.send(msgbb,0, msgbb.length);
 		engine.getSelector().wakeup();
 		
@@ -80,15 +85,14 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	public void run() {
 
 		ChatRoomFinal room = this;
+		String name = "Non défini";
+		_gui = new ChatGUI(name, room,room._autoJoinDebug);
 		
-		String name = "" + _idClient;
-		new ChatGUI(name, room,room._autoJoinDebug);
 
 	}
 
 	@Override
 	public void deliver(IMulticastEngine engine, ByteBuffer bytes) {
-		
 		
 	    String msg = new String(bytes.array());
 		
@@ -99,6 +103,8 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	@Override
 	public void joined(int pid) {
 		_idClient=pid;
+		_clientName = "Client " + _idClient;
+		_gui.getFrame().setTitle(_clientName);
 	}
 
 

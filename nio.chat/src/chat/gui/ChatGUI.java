@@ -26,6 +26,7 @@ public class ChatGUI implements Runnable{
 	TextArea deliveredMessages;
 	TextField inputArea;
 	Frame frame;
+
 	IChatRoom room;
 	String clientName;
 
@@ -99,14 +100,14 @@ public class ChatGUI implements Runnable{
 		}
 
 		public void joined(String name) {
-			System.out.println(name + " joined...");
+			System.out.println("[GUI] : " + name + " joined...");
 			group.addElement(name);
 			updateGroup();
 		}
 
 
 		public void left(String name) {
-			System.out.println(name + " left...");
+			System.out.println("[GUI] : " + name + " left...");
 			group.removeElement(name);
 			updateGroup();
 		}
@@ -181,10 +182,18 @@ public class ChatGUI implements Runnable{
 
 		cont.add(inputZone, BorderLayout.SOUTH);
 
-		frame.setSize(800, 300);
+		frame.setSize(600, 300);
 		frame.setResizable(false);
 		frame.setVisible(true);
 
+	}
+	
+	public Frame getFrame() {
+		return frame;
+	}
+
+	public void setFrame(Frame frame) {
+		this.frame = frame;
 	}
 
 	void updateGroup() {
@@ -269,6 +278,8 @@ public class ChatGUI implements Runnable{
 
 		public void actionPerformed(ActionEvent e) {
 			try {
+				
+				System.out.println("[CHATGUI] :" + clientName + " join ");
 				room.enter(clientName, listener);
 
 				frame.setTitle(clientName);
@@ -295,6 +306,7 @@ public class ChatGUI implements Runnable{
 
 		public void actionPerformed(ActionEvent e) {
 			try {
+				System.out.println("[GUI]Je leave " + clientName);
 				room.leave();
 				enterButton.setEnabled(true);
 				leaveButton.setEnabled(false);
@@ -317,8 +329,12 @@ public class ChatGUI implements Runnable{
 
 		public void actionPerformed(ActionEvent e) {
 			System.out.println("[GUI]Je quitte " + clientName);
-			//TODO Penser à couper l'engine
-
+			try {
+				room.leave();
+			} catch (ChatException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			frame.setVisible(false);
 		}
 	}
