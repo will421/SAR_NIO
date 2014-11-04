@@ -1,6 +1,7 @@
 package nio.multicast.implementation;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -42,6 +43,20 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 		acks = new boolean[groupSize];
 	}
 	
+	@Override
+	public String toString() {
+		String ackString = Arrays.toString(acks);
+		boolean full = true;
+		for(boolean b : acks)
+		{
+			full &= b;
+		}
+		if(full)
+			ackString = "[Full]";
+		return "M("+clock+","+pid+"):"+ackString;
+	}
+	
+	
 	public static MulticastQueueElement getElement(List<MulticastQueueElement> list,long clock,int pidM)
 	{
 		for(MulticastQueueElement el : list) {
@@ -51,6 +66,17 @@ public class MulticastQueueElement implements Comparable<MulticastQueueElement> 
 		    }
 		}
 		return null;
+	}
+	
+	public void updateMessage(ByteBuffer bytes)
+	{
+		bytes.position(0);
+		type = MESSAGE_TYPE.values()[bytes.getInt()];
+		bytes.getLong();
+		bytes.getInt();
+		ByteBuffer tmp = bytes.slice();
+		message = ByteBuffer.allocate(tmp.remaining());
+		message.put(tmp);
 	}
 	
 	public void ackReceived(int pidS)

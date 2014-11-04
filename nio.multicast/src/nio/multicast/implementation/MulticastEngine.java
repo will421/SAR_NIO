@@ -6,6 +6,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,9 +40,9 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	private int groupSize;
 	private List<MulticastQueueElement> queue;
 	private List<NioChannel> unknowChannels;
-	
+
 	private ListMember members;
-	
+
 	public MulticastEngine() throws Exception {
 		nEngine = new CNioEngine();
 		channelServer = null;
@@ -54,9 +55,12 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		unknowChannels = new LinkedList<NioChannel>();
 		queue = new LinkedList<MulticastQueueElement>();
 	}
-	
-	
-	
+
+	@Override
+	public String toString() {
+		return "{"+mPid+"}";
+	}
+
 	@Override
 	public void join(String adr, int port, IMulticastCallback callback) {
 		if(state == ENGINE_STATE.NOTHINGNESS)
@@ -89,8 +93,8 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	public List<Integer> getPIDS() {
 		return members.getPIDS();
 	}
-	
-	
+
+
 	private void receptionList(String[] ips,int[] ports)
 	{
 		groupSize = ips.length;
@@ -100,7 +104,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		{
 			members.addMember(i, ips[i], ports[i]);
 		}
-			
+
 		for(int i=mPid;i<groupSize;i++)
 		{
 			try {
@@ -125,8 +129,8 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		buf.position(0);
 		bytes.put(buf);
 		for(NioChannel channel: members.channels) {
-		    //Integer key = entry.getKey();
-		    channel.send(bytes);
+			//Integer key = entry.getKey();
+			channel.send(bytes);
 		}
 		System.out.println("{"+mPid+"}"+"Send M("+myClock+","+mPid+") x"+members.channels.length);
 		myClock++;
@@ -136,7 +140,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	public void send(byte[] bytes, int offset, int length) {
 		ByteBuffer buffer = ByteBuffer.allocate(length);
 		byte[] copy = bytes.clone();
-		
+
 		for(int i =offset;i<offset+length;i++)
 		{
 			buffer.put(copy[i]);
@@ -148,10 +152,10 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	@Override
 	public void leave() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
-	
+
 	private void handleReceiveServer(ByteBuffer bytes) {
 		// TODO Auto-generated method stub
 		bytes.position(0);
@@ -166,7 +170,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 			ByteBuffer buf = ByteBuffer.allocate(4);
 			buf.putInt(MESSAGE_SERVER_TYPE.BINDED.ordinal());
 			this.channelServer.send(buf);
@@ -200,8 +204,8 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			callback.joined(this, mPid);
 			state = ENGINE_STATE.WORKING;
 			//TODO temp
-			String s = "ahaha from "+"{"+mPid+"}";
-			this.send(s.getBytes(), 0, s.getBytes().length);
+			//String s = "ahaha from "+"{"+mPid+"}";
+			//this.send(s.getBytes(), 0, s.getBytes().length);
 		}
 		else
 		{
@@ -211,9 +215,9 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 				e.printStackTrace();
 			}
 		}
-		
+
 	}
-	
+
 	private void handleReceiveMember(ByteBuffer bytes)
 	{
 		bytes.position(0);
@@ -236,15 +240,15 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			}
 		}
 	}
-	
+
 	private void handleReceiveMessage(ByteBuffer bytes)
 	{
-		
+
 		bytes.position(0);
 		bytes.getInt();
 		long clock = bytes.getLong();
 		int pidM = bytes.getInt();
-		
+
 		//add to stack with clock
 		MulticastQueueElement el = MulticastQueueElement.getElement(queue, clock, pidM);
 		if(el==null)
@@ -252,16 +256,19 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			el = new MulticastQueueElement(bytes, groupSize);
 			queue.add(el);
 			Collections.sort(queue);
+		} else
+		{
+			el.updateMessage(bytes);
 		}
-	
+
 		myClock = Math.max(myClock,el.getClock());
-		
+
 		//TODO REMOVE
 		sendACK(bytes);
 		//handleDeliver();
 		//callback.deliver(this, bytes); //TODO A retirer
 	}
-	
+
 	private void handleReceiveACK(ByteBuffer bytes)
 	{ 
 		//tester l'ack et delivrer si suffisement d'ack
@@ -277,7 +284,7 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		long clock = bytes.getLong();
 		int pidM = bytes.getInt();
 		int pidS = bytes.getInt();
-		System.out.println("{"+mPid+"}:ACK:M("+clock+","+pidM+")/"+pidS);
+		//System.out.println("{"+mPid+"}:ACK:M("+clock+","+pidM+")/"+pidS);
 		MulticastQueueElement el = MulticastQueueElement.getElement(queue, clock, pidM);
 		if (el==null)
 		{
@@ -286,52 +293,67 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			Collections.sort(queue);
 		}
 		el.ackReceived(pidS);
-		
+
 		//Est ce que l'on delivre ou non ?
 		tryToDeliver();
-		
+
 	}
-	
-	
+
+
 	private void tryToDeliver()
 	{
 		if(queue.isEmpty())
 			return;
 		MulticastQueueElement first= queue.get(0);
+		System.out.println(this.toString()+"||"+Arrays.toString(queue.toArray()));
 		boolean deliver = (members.getMask() & ~first.getAcksMask())==0 ;
-		
-		while(deliver)
-		{
-			if(first.getType()== MESSAGE_TYPE.MESSAGE)
-			{
+
+		if(deliver){
+			if(first.getType()== MESSAGE_TYPE.MESSAGE){
 				callback.deliver(this, first.getMessage());
-				String s = new String(first.getMessage().array());
-				System.out.println("{"+mPid+"}"+"deliver : M("+first.getClock()+","+first.getPid()+")"+"->"+s);
+				//String s = new String(first.getMessage().array());
+				//System.out.println("###{"+mPid+"}"+"deliver : M("+first.getClock()+","+first.getPid()+")"+"->"+s);
 			}
-			else if (first.getType() == MESSAGE_TYPE.ADD_MEMBER)
-			{
+			else if (first.getType() == MESSAGE_TYPE.ADD_MEMBER){
 				//add member
+				try {
+					throw new Exception("Should not occur");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+			} else if (first.getType() == MESSAGE_TYPE.NOT_RECEIVED_YET){
+				return;
+			}
+			else{
+				try {
+					throw new Exception("Should not occur");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 			queue.remove(0);
-			
-			
+			tryToDeliver();
+			/*
 			if(queue.isEmpty())
 				return;
 			first = queue.get(0);
-			deliver = (members.getMask() & ~first.getAcksMask())==0 ;
+			deliver = (members.getMask() & ~first.getAcksMask())==0 ;*/
+
 		}
 
-		
+
+
 	}
-	
+
 	private void sendACK(ByteBuffer buf)
 	{
 		buf.position(0);
 		int type = buf.getInt();
 		long clock = buf.getLong();
 		int pid = buf.getInt();
-		
-		
+
+
 		ByteBuffer bytes = ByteBuffer.allocate(4+8+4+4);
 		bytes.putInt(MESSAGE_TYPE.ACK.ordinal());
 		bytes.putLong(clock);
@@ -339,18 +361,18 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		bytes.putInt(mPid);
 
 		for(NioChannel ch : members.channels) {
-		    //Integer key = entry.getKey();
+			//Integer key = entry.getKey();
 			if(ch==null)
 			{
 				continue;
 			}
-		    ch.send(bytes);
+			ch.send(bytes);
 		}
 		myClock++;
 	}
-	
-	
-	
+
+
+
 	//callbacks from NioEngine
 	@Override
 	public void accepted(NioServer server, NioChannel channel) {
@@ -376,10 +398,10 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 		}
 	}
 
-	
+
 	@Override
 	public void connected(NioChannel channel) {
-		
+
 		if(state == ENGINE_STATE.CONNECT_TO_SERVER)
 		{
 			//On considere que le channel represente le serveurs
@@ -460,8 +482,8 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 			}
 		}
 	}
-	
-	
+
+
 	@Override
 	public void closed(NioChannel channel) {
 		//Retirer le membre de la liste interne
@@ -469,5 +491,5 @@ public class MulticastEngine implements IMulticastEngine,AcceptCallback,ConnectC
 	}
 
 
-	
+
 }
