@@ -236,6 +236,7 @@ public class ChatGUI implements Runnable{
 					System.out.println(clientName);
 					enterButton.setEnabled(false);
 					leaveButton.setEnabled(true);
+					burstButton.setEnabled(true);
 				} catch (Exception ex) {
 				}
 
@@ -294,7 +295,7 @@ public class ChatGUI implements Runnable{
 		public void actionPerformed(ActionEvent e) {
 			try {
 				
-				System.out.println("[CHATGUI] :" + clientName + " join ");
+				//System.out.println("[CHATGUI] :" + clientName + " join ");
 				room.enter(clientName, listener);
 
 				frame.setTitle(clientName);
@@ -396,10 +397,6 @@ public class ChatGUI implements Runnable{
 			}
 		}
 	}
-	
-	
-	
-	
 	
 	
 	@Override

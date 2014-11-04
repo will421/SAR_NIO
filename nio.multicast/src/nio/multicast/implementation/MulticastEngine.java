@@ -158,8 +158,8 @@ public class MulticastEngine implements IMulticastEngine, AcceptCallback,
 		// TODO Auto-generated method stub
 		bytes.position(0);
 		MESSAGE_SERVER_TYPE type = MESSAGE_SERVER_TYPE.values()[bytes.getInt()];
-		System.out.println(String.valueOf("{" + mPid + "}"
-				+ ": Receive from server:" + type.toString()));
+		//System.out.println(String.valueOf("{" + mPid + "}"
+			//	+ ": Receive from server:" + type.toString()));
 		if (type == MESSAGE_SERVER_TYPE.PORT) {
 			int port = bytes.getInt();
 			try {

@@ -101,7 +101,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 		// TODO Auto-generated method stub
 		bytes.position(0);
 		MESSAGE_SERVER_TYPE type = MESSAGE_SERVER_TYPE.values()[bytes.getInt()];
-		System.out.println("[Server]Type:"+type.toString()+" delivered");
+		//System.out.println("[Server]Type:"+type.toString()+" delivered");
 		if(type == MESSAGE_SERVER_TYPE.BINDED)
 		{
 			_nbMemberLeft--;
@@ -133,7 +133,7 @@ public class MulticastEntryServer implements Runnable,AcceptCallback,DeliverCall
 					buffer.put(byteArray);
 					members[id].send(buffer);
 				}
-				System.out.println("[Server]List sended");
+				//System.out.println("[Server]List sended");
 			}
 		}
 		else if(type==MESSAGE_SERVER_TYPE.NEW_PORT)

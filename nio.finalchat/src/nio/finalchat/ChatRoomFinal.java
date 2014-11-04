@@ -25,7 +25,9 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	int _idClient;
 	int _port;
 	String _adr;
-
+	
+	
+	
 	Boolean _autoJoinDebug;
 
 	IChatListener m_listener;
@@ -40,7 +42,7 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		//this._clientName= clientName;
 		this._adr=adr;
 		this._port=port;
-		this._idClient =-1; // = -1 toujours pas dans le groupe
+		this._idClient = -1; // = -1 toujours pas dans le groupe
 		this.engine = new MulticastEngine();  
 		this._autoJoinDebug=autoJoinDebug;
 
@@ -54,16 +56,15 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 		// version avec nb de message qui marche
 
-		for(int i=0;i<1500;i++){
+		for(int i=0;i<50;i++){
 
 			Random rand = new Random();
 
-			int taille_random =rand.nextInt(20);
+			int taille_random =rand.nextInt(600);
 
 			String random_msg =randomString.rdmString(taille_random);
 			try {
 				send(prefClient + random_msg);
-				System.out.println(prefClient + random_msg);
 			} catch (ChatException e) {
 				e.printStackTrace();
 			}
@@ -93,7 +94,6 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	@Override
 	public void leave() throws ChatException {
 
-		System.out.println("[CHAT] : Je leave");
 		engine.leave();
 	}
 
@@ -104,8 +104,6 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 		msgbb= msg.getBytes();
 
-
-		System.out.println("[CHAT] :" + msgbb);
 		engine.send(msgbb,0, msgbb.length);
 		engine.getSelector().wakeup();
 
@@ -123,15 +121,15 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	@Override
 	public void deliver(IMulticastEngine engine, ByteBuffer bytes) {
-
+		
+		String prefClient = _clientName + " : ";
 		String msg = new String(bytes.array());
 
 		if(msg.equals("goburst")){
 			goBurst();
-			System.out.println("Il est là ");
 		}
 
-		m_listener.deliver(msg);
+		m_listener.deliver(prefClient + msg);
 	}
 
 
@@ -145,20 +143,20 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	@Override
 	public void memberJoin(int pid) {
-		_gui.updateGroup();
-		System.out.println("[CHAT ] :JOIN");
+		//_gui.updateGroup();
+		System.out.println("On Update le group "+ _clientName);
 	}
 
 	@Override
 	public void memberQuit(int pid) {
-		_gui.updateGroup();
-		System.out.println("[CHAT ] : QUIT");
+		//_gui.updateGroup();
+		System.out.println("On Update le group du " + _clientName);
 	}
 
 	@Override
 	public void disconnected() {
 
-		System.out.println("DISCONNECTED");
+
 	}
 
 
