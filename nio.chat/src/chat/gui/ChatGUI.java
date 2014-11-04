@@ -182,7 +182,7 @@ public class ChatGUI implements Runnable{
 
 		cont.add(inputZone, BorderLayout.SOUTH);
 
-		frame.setSize(600, 300);
+		frame.setSize(800, 300);
 		frame.setResizable(false);
 		frame.setVisible(true);
 
@@ -196,7 +196,9 @@ public class ChatGUI implements Runnable{
 		this.frame = frame;
 	}
 
-	void updateGroup() {
+	public void updateGroup() {
+		
+		
 		System.out.println("[GUI]Updating group...");
 		int rows = deliveredMessages.getColumns();
 		if (rows < group.size())
@@ -218,6 +220,10 @@ public class ChatGUI implements Runnable{
 		groupArea.repaint();
 
 	}
+	
+	
+	
+
 
 	WindowListener wl = new WindowListener() {
 
@@ -238,30 +244,39 @@ public class ChatGUI implements Runnable{
 		}
 
 		@Override
-		public void windowClosing(WindowEvent e) {
-
-			frame.dispose();
+		public void windowActivated(WindowEvent arg0) {
+			// TODO Auto-generated method stub
+			
 		}
 
 		@Override
-		public void windowClosed(WindowEvent e) {
-			//System.exit(-1); // Die, do not linger around still receiving messages...
+		public void windowClosed(WindowEvent arg0) {
+			// TODO Auto-generated method stub
+			
 		}
 
 		@Override
-		public void windowIconified(WindowEvent e) {
+		public void windowClosing(WindowEvent arg0) {
+			// TODO Auto-generated method stub
+			
 		}
 
 		@Override
-		public void windowDeiconified(WindowEvent e) {
+		public void windowDeactivated(WindowEvent arg0) {
+			// TODO Auto-generated method stub
+			
 		}
 
 		@Override
-		public void windowActivated(WindowEvent e) {
+		public void windowDeiconified(WindowEvent arg0) {
+			// TODO Auto-generated method stub
+			
 		}
 
 		@Override
-		public void windowDeactivated(WindowEvent e) {
+		public void windowIconified(WindowEvent arg0) {
+			// TODO Auto-generated method stub
+			
 		}
 
 	};
@@ -332,7 +347,7 @@ public class ChatGUI implements Runnable{
 			try {
 				room.leave();
 			} catch (ChatException e1) {
-				// TODO Auto-generated catch block
+
 				e1.printStackTrace();
 			}
 			frame.setVisible(false);
@@ -374,6 +389,7 @@ public class ChatGUI implements Runnable{
 		public void actionPerformed(ActionEvent e) {
 			try {
 				System.out.println("[GUI] : On burst ! ");
+				room.send("goburst");
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				System.exit(-1); // offending exception, commit Seppuku !

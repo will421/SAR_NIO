@@ -3,7 +3,10 @@ package nio.finalchat;
 
 
 import java.nio.ByteBuffer;
+import java.util.Random;
 
+import util.string.randomString;
+import nio.engine.Options;
 import nio.multicast.IMulticastCallback;
 import nio.multicast.IMulticastEngine;
 import nio.multicast.implementation.MulticastEngine;
@@ -18,11 +21,11 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	EventPump m_pump;
 	String _clientName;
 	ChatGUI _gui;
-	
+
 	int _idClient;
 	int _port;
 	String _adr;
-	
+
 	Boolean _autoJoinDebug;
 
 	IChatListener m_listener;
@@ -43,13 +46,39 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	}
 
+
+
+	private void goBurst() {
+
+		String prefClient = _clientName + " : ";
+
+		// version avec nb de message qui marche
+
+		for(int i=0;i<1500;i++){
+
+			Random rand = new Random();
+
+			int taille_random =rand.nextInt(20);
+
+			String random_msg =randomString.rdmString(taille_random);
+			try {
+				send(prefClient + random_msg);
+				System.out.println(prefClient + random_msg);
+			} catch (ChatException e) {
+				e.printStackTrace();
+			}
+
+		}
+
+	}
+
 	@Override
 	public void enter(String clientName, IChatListener l) throws ChatException {
 
 		final ChatRoomFinal cpChatRoom = this;
 
 		m_listener = l;
-		
+
 		m_pump.enqueue(new Runnable() {
 
 			public void run() {
@@ -63,22 +92,23 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	@Override
 	public void leave() throws ChatException {
-		
+
 		System.out.println("[CHAT] : Je leave");
 		engine.leave();
 	}
 
 	@Override
 	public void send(String msg) throws ChatException {
-		
+
 		final byte[] msgbb;
 
-		
 		msgbb= msg.getBytes();
+
+
 		System.out.println("[CHAT] :" + msgbb);
 		engine.send(msgbb,0, msgbb.length);
 		engine.getSelector().wakeup();
-		
+
 	}
 
 	@Override
@@ -87,15 +117,20 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		ChatRoomFinal room = this;
 		String name = "Non défini";
 		_gui = new ChatGUI(name, room,room._autoJoinDebug);
-		
+
 
 	}
 
 	@Override
 	public void deliver(IMulticastEngine engine, ByteBuffer bytes) {
-		
-	    String msg = new String(bytes.array());
-		
+
+		String msg = new String(bytes.array());
+
+		if(msg.equals("goburst")){
+			goBurst();
+			System.out.println("Il est là ");
+		}
+
 		m_listener.deliver(msg);
 	}
 
@@ -110,19 +145,19 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	@Override
 	public void memberJoin(int pid) {
-		// TODO Auto-generated method stub
-		System.out.println("JOIN");
+		_gui.updateGroup();
+		System.out.println("[CHAT ] :JOIN");
 	}
 
 	@Override
 	public void memberQuit(int pid) {
-		// TODO Auto-generated method stub
-		System.out.println("QUIT");
+		_gui.updateGroup();
+		System.out.println("[CHAT ] : QUIT");
 	}
 
 	@Override
 	public void disconnected() {
-		// TODO Auto-generated method stub
+
 		System.out.println("DISCONNECTED");
 	}
 
