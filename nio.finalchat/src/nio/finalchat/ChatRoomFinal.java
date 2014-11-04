@@ -10,6 +10,7 @@ import nio.engine.Options;
 import nio.multicast.IMulticastCallback;
 import nio.multicast.IMulticastEngine;
 import nio.multicast.implementation.MulticastEngine;
+import nio.multicast.implementation.Option;
 import chat.gui.ChatException;
 import chat.gui.ChatGUI;
 import chat.gui.IChatRoom;
@@ -46,29 +47,38 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	}
 
-
-
 	private void goBurst() {
+		
+		Runnable r = new Runnable() {
+			
+			@Override
+			public void run() {
+				String prefClient = _clientName + " : ";
 
-		String prefClient = _clientName + " : ";
+				// version avec nb de message qui marche
 
-		// version avec nb de message qui marche
+				for(int i=0;i<Option.nbMessage;i++){
 
-		for(int i=0;i<1500;i++){
+					Random rand = new Random();
 
-			Random rand = new Random();
+					int taille_random =rand.nextInt(Option.maxMessageLength);
 
-			int taille_random =rand.nextInt(20);
+					String random_msg =randomString.rdmString(taille_random);
+					try {
+						Thread.sleep(Option.burstSleep);
+						send(prefClient + random_msg);
+						System.out.println(prefClient + random_msg);
+					} catch (ChatException e) {
+						e.printStackTrace();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 
-			String random_msg =randomString.rdmString(taille_random);
-			try {
-				send(prefClient + random_msg);
-				System.out.println(prefClient + random_msg);
-			} catch (ChatException e) {
-				e.printStackTrace();
+				}
 			}
-
-		}
+		};
+		Thread t = new Thread(r);
+		t.start();
 
 	}
 

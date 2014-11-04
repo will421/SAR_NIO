@@ -103,7 +103,8 @@ public class CNioChannel extends NioChannel {
 				nc.sendHeartbeat();
 			}
 		}, 10000);
-		new Thread(heartbeat).start();
+		heartbeat=null;
+		//new Thread(heartbeat).run();
 	}
 	
 	
@@ -159,6 +160,11 @@ public class CNioChannel extends NioChannel {
 	@Override
 	public void close() {
 		try {
+			if(heartbeat!=null)
+			{
+				heartbeat.stop();
+				heartbeat = null;
+			}
 			socketChannel.close();
 		} catch (IOException e) {
 			// nothing to do if it is closed
@@ -269,7 +275,8 @@ public class CNioChannel extends NioChannel {
 				return;
 			}
 			else {
-				heartbeat.reset();
+				if(heartbeat!=null)
+					heartbeat.pass();
 			}
 			if (currentReadingState == READING_STATE.READING_DONE
 					&& (inMetadata & isAMessage) != 0)
@@ -281,7 +288,8 @@ public class CNioChannel extends NioChannel {
 
 	public boolean sendAutomatton()
 			throws ClosedChannelException, IOException {
-		if(!hb) heartbeat.reset();
+		if(heartbeat==null) hb=false;
+		if(!hb && heartbeat!=null) heartbeat.pass();
 		// retourne true si il n'y a plus ri1en a envoyer
 		// Penser à continuer l'envoi si il reste de la place dans le bufferNio
 		int res = 0;
