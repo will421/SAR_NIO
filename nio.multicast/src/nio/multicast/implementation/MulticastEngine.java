@@ -148,7 +148,8 @@ public class MulticastEngine implements IMulticastEngine, AcceptCallback,
 		state= ENGINE_STATE.NOTHINGNESS;
 		for(NioChannel channel : members.channels)
 		{
-			channel.close();
+			if(channel!=null)
+				channel.close();
 		}
 		
 		callback.disconnected();

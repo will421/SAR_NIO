@@ -3,7 +3,11 @@ package nio.finalchat;
 
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
+import java.util.Vector;
 
 import util.string.randomString;
 import nio.engine.Options;
@@ -27,16 +31,16 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	int _port;
 	String _adr;
 	
-	
-	
 	Boolean _autoJoinDebug;
 
 	IChatListener m_listener;
 	IMulticastEngine engine;
 
+	HashMap<Integer,String> _group;
+
 
 	ChatRoomFinal(String adr, int port,Boolean autoJoinDebug) throws Exception {
-
+		
 		this.m_pump = new EventPump(this);
 		this.m_pump.start();
 		//this._idClient = Integer.parseInt(clientName.replaceAll("[^\\d.]", ""));
@@ -46,9 +50,14 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 		this._idClient = -1; // = -1 toujours pas dans le groupe
 		this.engine = new MulticastEngine();  
 		this._autoJoinDebug=autoJoinDebug;
-
+		this._group = new HashMap<Integer,String>();
 	}
 
+	@Override
+	public String toString() {
+		return ""+_idClient;
+	}
+	
 	private void goBurst() {
 		
 		Runnable r = new Runnable() {
@@ -69,7 +78,7 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 					String random_msg =randomString.rdmString(taille_random);
 					try {
 						Thread.sleep(Option.burstSleep);
-						send(prefClient + random_msg);
+						send("[Client :" +prefClient+"] : " + random_msg);
 						//System.out.println(prefClient + random_msg);
 					} catch (ChatException e) {
 						e.printStackTrace();
@@ -133,42 +142,63 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 	@Override
 	public void deliver(IMulticastEngine engine, ByteBuffer bytes) {
 		
-		String prefClient = _clientName + " : ";
+		
 		String msg = new String(bytes.array());
 
 		if(msg.equals("goburst")){
 			goBurst();
 		}
 
-		m_listener.deliver(prefClient + msg);
+		m_listener.deliver(msg);
 	}
 
 
 	@Override
 	public void joined(int pid) {
 		_idClient=pid;
-		_clientName = "Client " + _idClient;
+		_clientName = "" +_idClient;
+		_gui.setClientName(_clientName);
 		_gui.getFrame().setTitle(_clientName);
 	}
 
 
 	@Override
-	public void memberJoin(int pid) {
-		//_gui.updateGroup();
-		System.out.println("On Update le group "+ _clientName);
+	public void memberJoin(final int pid) {
+		_group.put(pid,"Client"+pid);
+		m_listener.joined(_group.get(pid));
+		/*
+		m_pump.enqueue(new Runnable() {
+
+			public void run() {
+				m_listener.joined(_group.get(pid));
+			}
+		});*/
 	}
 
 	@Override
-	public void memberQuit(int pid) {
-		//_gui.updateGroup();
-		System.out.println("On Update le group du " + _clientName);
-	}
+	public void memberQuit(final int pid) {
+		m_listener.left(_group.get(pid));
+		_group.remove(pid);
+		/*
+		m_pump.enqueue(new Runnable() {
 
+			public void run() {
+				m_listener.left(_group.get(pid));
+			}
+		});*/
+		
+	}
+	
 	@Override
 	public void disconnected() {
 
 
 	}
+
+	public Vector<String> get_group() {
+		return null;
+	}
+
 
 
 }

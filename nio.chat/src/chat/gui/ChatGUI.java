@@ -30,6 +30,7 @@ public class ChatGUI implements Runnable{
 	IChatRoom room;
 	String clientName;
 
+
 	Button enterButton;
 	Button leaveButton;
 	Button burstButton;
@@ -46,6 +47,17 @@ public class ChatGUI implements Runnable{
 	 * GUI components.
 	 * This may not be the best approach... If you find a better way, let us know.
 	 */
+	
+	
+	public String getClientName() {
+		return clientName;
+	}
+
+	
+	public void setClientName(String clientName) {
+		this.clientName = clientName;
+	}
+	
 	class EventContainer extends Container {
 
 		public EventContainer() {
@@ -108,7 +120,8 @@ public class ChatGUI implements Runnable{
 
 		public void left(String name) {
 			System.out.println("[GUI] : " + name + " left...");
-			group.removeElement(name);
+			boolean b = group.removeElement(name);
+
 			updateGroup();
 		}
 	};
@@ -198,6 +211,7 @@ public class ChatGUI implements Runnable{
 
 	public void updateGroup() {
 		
+
 		
 		System.out.println("[GUI]Updating group...");
 		int rows = deliveredMessages.getColumns();
@@ -211,19 +225,17 @@ public class ChatGUI implements Runnable{
 				columns = n.length();
 		}
 		groupArea.setColumns(columns);
-		groupArea.setText("");
+		groupArea.setText(null);
+		//groupArea.rem
 		for (int i = 0; i < group.size(); i++)
 			groupArea.append(group.elementAt(i) + "\n");
-
+		groupArea.append("");
 		groupArea.invalidate();
 		groupArea.doLayout();
 		groupArea.repaint();
 
 	}
 	
-	
-	
-
 
 	WindowListener wl = new WindowListener() {
 
@@ -370,6 +382,8 @@ public class ChatGUI implements Runnable{
 			try {
 				String msg = gui.inputArea.getText();
 				gui.inputArea.setText("");
+				
+				msg = "[Client :" +clientName+"] : " + msg;
 				System.out.println(msg);
 				room.send(msg);
 			} catch (Exception ex) {
@@ -404,6 +418,8 @@ public class ChatGUI implements Runnable{
 
 
 	}
+
+
 
 
 }
