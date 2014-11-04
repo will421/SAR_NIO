@@ -1,6 +1,7 @@
 package nio.multicast;
 
 import java.nio.ByteBuffer;
+import java.nio.channels.Selector;
 import java.util.List;
 
 public interface IMulticastEngine {
@@ -50,5 +51,7 @@ public interface IMulticastEngine {
 
 
 	  public List<Integer> getPIDS();
+	  
+	  public Selector getSelector();
 	
 }

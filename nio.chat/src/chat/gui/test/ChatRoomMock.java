@@ -27,7 +27,7 @@ public class ChatRoomMock implements IChatRoom {
     else
       name = args[0];
     room = new ChatRoomMock();
-    new ChatGUI(name, room);
+    new ChatGUI(name, room,false);
     // we are done here...
     // the main thread terminates
     // but the GUI thread will remain

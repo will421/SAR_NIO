@@ -81,7 +81,7 @@ public class dialogInit extends JFrame implements ActionListener {
 
 			ChatRoomFinal room;
 			String name;
-
+			Boolean autoJoinDebug = autoJoin.getState();
 			
 			int nbrofClients;
 			Object o =listNbClients.getSelectedItem();
@@ -105,7 +105,7 @@ public class dialogInit extends JFrame implements ActionListener {
 
 				Thread t = null;
 				try {
-					t = new Thread(room = new ChatRoomFinal(_adrServer,_portServer));
+					t = new Thread(room = new ChatRoomFinal(_adrServer,_portServer,autoJoinDebug));
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
