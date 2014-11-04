@@ -24,6 +24,7 @@ public class CNioChannel extends NioChannel {
 
 	private static final int isAMessage = 0x1;
 	private static final int containChecksum = 0x2;
+	private static final int heartBeat = 0x4;
 	
 	private static final int outMetaData = isAMessage | containChecksum;
 	

@@ -13,7 +13,8 @@ public class ListMember{
 	private String adrs[];
 	private int ports[];
 	public NioChannel channels[]; //remettre priver
-	public NioChannel channelInLocal;
+	private NioChannel channelInLocal;
+	private int pidLocal;
 
 	public ListMember(int length) {
 		this.length = length;
@@ -33,9 +34,22 @@ public class ListMember{
 
 	}
 
+	public void setChannelInLocal(NioChannel ch,int pid)
+	{
+		channelInLocal = ch;
+		pidLocal = pid;
+	}
+	
+	public NioChannel getChannelInLocal()
+	{
+		return channelInLocal;
+	}
+	
 	public int getPid(NioChannel channel)
 	{
 		int res=-1;
+		if(channel == channelInLocal)
+			return pidLocal;
 		for(int i=0;i<length;i++)
 		{
 			if(channels[i]==channel)
@@ -57,13 +71,19 @@ public class ListMember{
 		channels[pid] = channel;
 	}
 
-	public void disconnected(NioChannel channel)
+	@SuppressWarnings("unused")
+	public int disconnected(NioChannel channel)
 	{
 		int pid = getPid(channel);
+		if(pid==-1)
+		{
+			int a=1;
+		}
 		channels[pid] = null;
 		valid[pid] = false;
 		adrs[pid] = null;
 		ports[pid] = -1;
+		return pid;
 	}
 
 	public void addMember(int pid,String adr,int port)

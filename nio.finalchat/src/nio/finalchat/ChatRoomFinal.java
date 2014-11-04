@@ -97,8 +97,27 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 
 	@Override
-	public void joined(IMulticastEngine engine, int pid) {
+	public void joined(int pid) {
 		_idClient=pid;
+	}
+
+
+	@Override
+	public void memberJoin(int pid) {
+		// TODO Auto-generated method stub
+		System.out.println("JOIN");
+	}
+
+	@Override
+	public void memberQuit(int pid) {
+		// TODO Auto-generated method stub
+		System.out.println("QUIT");
+	}
+
+	@Override
+	public void disconnected() {
+		// TODO Auto-generated method stub
+		System.out.println("DISCONNECTED");
 	}
 
 
