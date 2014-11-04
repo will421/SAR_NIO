@@ -6,9 +6,9 @@ import java.util.List;
 public class Option {
 
 	
-	static public String ips[] = {"localhost","localhost"};
-	static public int ports[] = {51230,51231};
-	static public int groupSize = 2;
 
-	
+	public static int nbMessage =50;
+	public static int maxMessageLength = 1200;
+	public static long burstSleep = 0;
+
 }
