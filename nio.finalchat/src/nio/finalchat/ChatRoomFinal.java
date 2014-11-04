@@ -61,7 +61,7 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 
 	@Override
 	public void leave() throws ChatException {
-	
+		engine.leave();
 	}
 
 	@Override
