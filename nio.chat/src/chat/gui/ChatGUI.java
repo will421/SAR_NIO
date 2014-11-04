@@ -335,9 +335,13 @@ public class ChatGUI implements Runnable{
 		public void actionPerformed(ActionEvent e) {
 			try {
 				System.out.println("[GUI]Je leave " + clientName);
-				room.leave();
+				
+		
 				enterButton.setEnabled(true);
 				leaveButton.setEnabled(false);
+				this.gui.groupArea.setText("");
+				this.gui.deliveredMessages.setText("");
+				
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				System.exit(-1); // offending exception, commit Seppuku !
