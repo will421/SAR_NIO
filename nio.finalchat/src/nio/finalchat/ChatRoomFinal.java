@@ -70,15 +70,13 @@ public class ChatRoomFinal implements IChatRoom, Runnable, IMulticastCallback {
 					try {
 						Thread.sleep(Option.burstSleep);
 						send(prefClient + random_msg);
-						System.out.println(prefClient + random_msg);
+						//System.out.println(prefClient + random_msg);
 					} catch (ChatException e) {
 						e.printStackTrace();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
-
 				}
-
 			}
 		};
 		Thread t = new Thread(r);
